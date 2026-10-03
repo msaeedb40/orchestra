@@ -4,7 +4,7 @@ metadata:
   name: orchestranodes.orchestra.io
 spec:
   group: orchestra.io
-  scope: Cluster
+  scope: Namespaced
   names:
     plural: orchestranodes
     singular: orchestranode

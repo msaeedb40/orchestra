@@ -1,6 +1,9 @@
 package client
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // APIError represents an error response from the Orchestra API server.
 type APIError struct {
@@ -14,24 +17,14 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("orchestra API error %d: %s", e.StatusCode, e.Message)
 }
 
-// IsNotFound returns true when err is an *APIError with StatusCode 404.
+// IsNotFound returns true when err (or any error it wraps) is an *APIError with StatusCode 404.
 func IsNotFound(err error) bool {
-	if err == nil {
-		return false
-	}
-	if apiErr, ok := err.(*APIError); ok {
-		return apiErr.StatusCode == 404
-	}
-	return false
+	var apiErr *APIError
+	return errors.As(err, &apiErr) && apiErr.StatusCode == 404
 }
 
-// IsConflict returns true when err is an *APIError with StatusCode 409.
+// IsConflict returns true when err (or any error it wraps) is an *APIError with StatusCode 409.
 func IsConflict(err error) bool {
-	if err == nil {
-		return false
-	}
-	if apiErr, ok := err.(*APIError); ok {
-		return apiErr.StatusCode == 409
-	}
-	return false
+	var apiErr *APIError
+	return errors.As(err, &apiErr) && apiErr.StatusCode == 409
 }

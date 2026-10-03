@@ -4,7 +4,7 @@ metadata:
   name: orchestraclusters.orchestra.io
 spec:
   group: orchestra.io
-  scope: Cluster
+  scope: Namespaced
   names:
     plural: orchestraclusters
     singular: orchestracluster
@@ -23,7 +23,7 @@ spec:
           properties:
             spec:
               type: object
-              required: ["name", "kubernetesVersion"]
+              required: ["name", "kubernetesVersion", "controlPlane"]
               properties:
                 name:
                   type: string
@@ -36,6 +36,7 @@ spec:
                   type: string
                 controlPlane:
                   type: object
+                  required: ["replicas"]
                   properties:
                     replicas:
                       type: integer
