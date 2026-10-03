@@ -83,7 +83,7 @@ spec:
       additionalPrinterColumns:
         - name: NAME
           type: string
-          jsonPath: .spec.name
+          jsonPath: .metadata.name
         - name: VERSION
           type: string
           jsonPath: .spec.kubernetesVersion

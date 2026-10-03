@@ -170,7 +170,14 @@ func NewNetwork(name, namespace string) *v1alpha1.OrchestraNetwork {
 
 // ---- Utility functions ----
 
-// GroupVersionKind returns the fully qualified group/version/kind string.
+// GroupVersionKind returns a slash-delimited label string of the form
+// "orchestra.io/v1alpha1/Kind" (e.g. "orchestra.io/v1alpha1/OrchestraCluster").
+//
+// NOTE: This is NOT a Kubernetes apiVersion string (which is "orchestra.io/v1alpha1"
+// without the kind segment) and must not be passed to Kubernetes API machinery
+// that expects apiVersion. It is intended only as a human-readable logging or
+// display label. For TypeMeta fields use the APIVersion constant and
+// KindOrchestraCluster/KindOrchestraNode/KindOrchestraNetwork constants directly.
 func GroupVersionKind(kind string) string {
 	return v1alpha1.APIVersion + "/" + kind
 }

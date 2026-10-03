@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/orchestra/orchestra/api/v1alpha1"
@@ -35,8 +36,8 @@ func NewClient(cfg ClientConfig) *Client {
 
 // do builds, executes, and validates an HTTP request. Non-2xx responses are
 // returned as *APIError. The caller is responsible for closing the response body.
-func (c *Client) do(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, method, url, body)
+func (c *Client) do(ctx context.Context, method, rawURL string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, method, rawURL, body)
 	if err != nil {
 		return nil, fmt.Errorf("building request: %w", err)
 	}
@@ -81,8 +82,8 @@ func decode(resp *http.Response, v interface{}) error {
 
 // ListClusters returns all OrchestraClusters from the API server.
 func (c *Client) ListClusters(ctx context.Context) ([]v1alpha1.OrchestraCluster, error) {
-	url := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/clusters"
-	resp, err := c.do(ctx, http.MethodGet, url, nil)
+	rawURL := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/clusters"
+	resp, err := c.do(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -95,8 +96,8 @@ func (c *Client) ListClusters(ctx context.Context) ([]v1alpha1.OrchestraCluster,
 
 // GetCluster returns the named OrchestraCluster.
 func (c *Client) GetCluster(ctx context.Context, name string) (*v1alpha1.OrchestraCluster, error) {
-	url := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/clusters/" + name
-	resp, err := c.do(ctx, http.MethodGet, url, nil)
+	rawURL := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/clusters/" + url.PathEscape(name)
+	resp, err := c.do(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -113,8 +114,8 @@ func (c *Client) CreateCluster(ctx context.Context, cluster *v1alpha1.OrchestraC
 	if err != nil {
 		return nil, fmt.Errorf("marshalling cluster: %w", err)
 	}
-	url := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/clusters"
-	resp, err := c.do(ctx, http.MethodPost, url, bytes.NewBuffer(b))
+	rawURL := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/clusters"
+	resp, err := c.do(ctx, http.MethodPost, rawURL, bytes.NewBuffer(b))
 	if err != nil {
 		return nil, err
 	}
@@ -127,8 +128,8 @@ func (c *Client) CreateCluster(ctx context.Context, cluster *v1alpha1.OrchestraC
 
 // DeleteCluster deletes the named OrchestraCluster.
 func (c *Client) DeleteCluster(ctx context.Context, name string) error {
-	url := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/clusters/" + name
-	resp, err := c.do(ctx, http.MethodDelete, url, nil)
+	rawURL := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/clusters/" + url.PathEscape(name)
+	resp, err := c.do(ctx, http.MethodDelete, rawURL, nil)
 	if err != nil {
 		return err
 	}
@@ -138,8 +139,8 @@ func (c *Client) DeleteCluster(ctx context.Context, name string) error {
 
 // ListNodes returns all OrchestraNodes belonging to clusterName.
 func (c *Client) ListNodes(ctx context.Context, clusterName string) ([]v1alpha1.OrchestraNode, error) {
-	url := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/clusters/" + clusterName + "/nodes"
-	resp, err := c.do(ctx, http.MethodGet, url, nil)
+	rawURL := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/clusters/" + url.PathEscape(clusterName) + "/nodes"
+	resp, err := c.do(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -152,8 +153,8 @@ func (c *Client) ListNodes(ctx context.Context, clusterName string) ([]v1alpha1.
 
 // GetNode returns a specific OrchestraNode within a cluster.
 func (c *Client) GetNode(ctx context.Context, clusterName, nodeName string) (*v1alpha1.OrchestraNode, error) {
-	url := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/clusters/" + clusterName + "/nodes/" + nodeName
-	resp, err := c.do(ctx, http.MethodGet, url, nil)
+	rawURL := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/clusters/" + url.PathEscape(clusterName) + "/nodes/" + url.PathEscape(nodeName)
+	resp, err := c.do(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -166,8 +167,8 @@ func (c *Client) GetNode(ctx context.Context, clusterName, nodeName string) (*v1
 
 // ListNetworks returns all OrchestraNetworks.
 func (c *Client) ListNetworks(ctx context.Context) ([]v1alpha1.OrchestraNetwork, error) {
-	url := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/networks"
-	resp, err := c.do(ctx, http.MethodGet, url, nil)
+	rawURL := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/networks"
+	resp, err := c.do(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -180,8 +181,8 @@ func (c *Client) ListNetworks(ctx context.Context) ([]v1alpha1.OrchestraNetwork,
 
 // GetNetwork returns the OrchestraNetwork associated with clusterName.
 func (c *Client) GetNetwork(ctx context.Context, clusterName string) (*v1alpha1.OrchestraNetwork, error) {
-	url := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/networks/" + clusterName
-	resp, err := c.do(ctx, http.MethodGet, url, nil)
+	rawURL := c.cfg.BaseURL + "/apis/orchestra.io/v1alpha1/networks/" + url.PathEscape(clusterName)
+	resp, err := c.do(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, err
 	}
