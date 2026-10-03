@@ -1,0 +1,76 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: orchestranodes.orchestra.io
+spec:
+  group: orchestra.io
+  scope: Cluster
+  names:
+    plural: orchestranodes
+    singular: orchestranode
+    kind: OrchestraNode
+    shortNames:
+      - on
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: ["clusterName", "role", "address"]
+              properties:
+                clusterName:
+                  type: string
+                role:
+                  type: string
+                  enum: ["control-plane", "worker"]
+                address:
+                  type: string
+                vm:
+                  type: object
+                  properties:
+                    cpus:
+                      type: integer
+                    memoryMB:
+                      type: integer
+                    diskGB:
+                      type: integer
+                    image:
+                      type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                kubernetesVersion:
+                  type: string
+                containerdVersion:
+                  type: string
+                runcVersion:
+                  type: string
+                cniReady:
+                  type: boolean
+                ebpfLoaded:
+                  type: boolean
+      additionalPrinterColumns:
+        - name: NAME
+          type: string
+          jsonPath: .metadata.name
+        - name: CLUSTER
+          type: string
+          jsonPath: .spec.clusterName
+        - name: ROLE
+          type: string
+          jsonPath: .spec.role
+        - name: PHASE
+          type: string
+          jsonPath: .status.phase
+        - name: AGE
+          type: date
+          jsonPath: .metadata.creationTimestamp
