@@ -1,0 +1,26 @@
+[package]
+name = "orchestra-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "orchestra"
+path = "src/main.rs"
+
+[dependencies]
+orchestra-common = { workspace = true }
+orchestra-core = { workspace = true }
+orchestra-config = { workspace = true }
+orchestra-api = { workspace = true }
+tonic = { workspace = true }
+tokio = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

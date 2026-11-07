@@ -1,0 +1,68 @@
+[package]
+name = "orchestra-integration-tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+orchestra-common = { workspace = true }
+orchestra-core = { workspace = true }
+orchestra-config = { workspace = true }
+orchestra-storage = { workspace = true }
+orchestra-runtime = { workspace = true }
+orchestra-kubernetes = { workspace = true }
+orchestra-network = { workspace = true }
+orchestra-ebpf = { workspace = true }
+orchestra-ebpf-common = { path = "../ebpf/orchestra-ebpf-common" }
+orchestra-observability = { workspace = true }
+orchestra-security = { workspace = true }
+orchestra-api = { workspace = true }
+orchestra-daemon = { workspace = true }
+orchestra-cli = { workspace = true }
+tokio = { workspace = true }
+tonic = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+
+[[test]]
+name = "daemon_api"
+path = "tests/integration/daemon_api.rs"
+
+[[test]]
+name = "docker_runtime"
+path = "tests/integration/docker_runtime.rs"
+
+[[test]]
+name = "kubernetes_bootstrap"
+path = "tests/integration/kubernetes_bootstrap.rs"
+
+[[test]]
+name = "storage"
+path = "tests/integration/storage.rs"
+
+[[test]]
+name = "service_lb"
+path = "tests/networking/service_lb.rs"
+
+[[test]]
+name = "cni_compatibility"
+path = "tests/networking/cni_compatibility.rs"
+
+[[test]]
+name = "map_operations"
+path = "tests/ebpf/map_operations.rs"
+
+[[test]]
+name = "program_loading"
+path = "tests/ebpf/program_loading.rs"
+
+[[test]]
+name = "cluster_lifecycle"
+path = "tests/e2e/cluster_lifecycle.rs"

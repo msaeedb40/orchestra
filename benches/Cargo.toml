@@ -1,0 +1,41 @@
+[package]
+name = "orchestra-benchmarks"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+orchestra-common = { workspace = true }
+orchestra-core = { workspace = true }
+orchestra-config = { workspace = true }
+orchestra-storage = { workspace = true }
+orchestra-kubernetes = { workspace = true }
+orchestra-network = { workspace = true }
+orchestra-ebpf = { workspace = true }
+orchestra-ebpf-common = { path = "../ebpf/orchestra-ebpf-common" }
+orchestra-observability = { workspace = true }
+orchestra-security = { workspace = true }
+criterion = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+
+[[bench]]
+name = "ebpf_maps"
+harness = false
+
+[[bench]]
+name = "ipam"
+harness = false
+
+[[bench]]
+name = "config_parsing"
+harness = false
+
+[[bench]]
+name = "kubeadm_generation"
+harness = false
+

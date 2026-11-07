@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package orchestra.common.v1;
+
+message Empty {}
+
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+enum OperationStatus {
+  OPERATION_STATUS_UNSPECIFIED = 0;
+  OPERATION_STATUS_PENDING = 1;
+  OPERATION_STATUS_RUNNING = 2;
+  OPERATION_STATUS_COMPLETED = 3;
+  OPERATION_STATUS_FAILED = 4;
+}
+
+message OperationResponse {
+  string operation_id = 1;
+  OperationStatus status = 2;
+  string message = 3;
+}
+

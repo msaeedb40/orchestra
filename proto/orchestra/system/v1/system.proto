@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package orchestra.system.v1;
+
+service SystemService {
+  rpc Ping(PingRequest) returns (PingResponse);
+  rpc GetSystemInfo(GetSystemInfoRequest) returns (GetSystemInfoResponse);
+}
+
+message PingRequest {}
+
+message PingResponse {
+  string message = 1;
+  int64 timestamp = 2;
+}
+
+message GetSystemInfoRequest {}
+
+message GetSystemInfoResponse {
+  string daemon_version = 1;
+  string git_commit = 2;
+  string os = 3;
+  string arch = 4;
+  int64 uptime_seconds = 5;
+}
+

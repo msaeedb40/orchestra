@@ -1,0 +1,62 @@
+name: Lint & Format
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fmt:
+    name: Rustfmt Check
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+          components: rustfmt
+
+      - name: Check code formatting (workspace)
+        run: cargo fmt --all -- --check
+
+      - name: Check code formatting (ebpf)
+        run: cargo fmt --manifest-path ebpf/Cargo.toml --all -- --check
+
+  clippy:
+    name: Clippy Linter
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler libelf-dev clang llvm pkg-config libssl-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+          components: clippy
+
+      - name: Setup Rust caching
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run Clippy (workspace)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Run Clippy (ebpf)
+        run: cargo clippy --manifest-path ebpf/Cargo.toml --all-targets -- -D warnings
+

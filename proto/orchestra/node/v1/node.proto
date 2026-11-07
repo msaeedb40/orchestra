@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package orchestra.node.v1;
+
+service NodeService {
+  rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
+  rpc RemoveNode(RemoveNodeRequest) returns (RemoveNodeResponse);
+  rpc ListNodes(ListNodesRequest) returns (ListNodesResponse);
+}
+
+message NodeInfo {
+  string id = 1;
+  string cluster_id = 2;
+  string name = 3;
+  string role = 4;
+  string state = 5;
+  string ip_address = 6;
+  string container_id = 7;
+}
+
+message AddNodeRequest {
+  string cluster_name = 1;
+  string role = 2;
+}
+
+message AddNodeResponse {
+  string operation_id = 1;
+  NodeInfo node = 2;
+}
+
+message RemoveNodeRequest {
+  string cluster_name = 1;
+  string node_name_or_id = 2;
+}
+
+message RemoveNodeResponse {
+  string operation_id = 1;
+  bool success = 2;
+}
+
+message ListNodesRequest {
+  string cluster_name = 1;
+}
+
+message ListNodesResponse {
+  repeated NodeInfo nodes = 1;
+}
+

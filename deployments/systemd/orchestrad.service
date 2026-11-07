@@ -1,0 +1,33 @@
+[Unit]
+Description=Orchestra Kubernetes Cluster Orchestration Daemon
+Documentation=https://github.com/msaeedb40/orchestra
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/local/bin/orchestrad --listen-addr 127.0.0.1:50051 --db-path /var/lib/orchestra/orchestra.db
+Restart=always
+RestartSec=5s
+LimitNOFILE=65536
+LimitNPROC=65536
+LimitMEMLOCK=infinity
+TasksMax=infinity
+
+# Security hardening
+ProtectSystem=full
+ProtectHome=read-only
+NoNewPrivileges=false
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_SYS_ADMIN CAP_SYS_RESOURCE CAP_SYS_PTRACE CAP_IPC_LOCK
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=orchestrad
+
+[Install]
+WantedBy=multi-user.target
+

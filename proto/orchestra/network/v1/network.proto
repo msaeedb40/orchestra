@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package orchestra.network.v1;
+
+service NetworkService {
+  rpc GetNetworkStatus(GetNetworkStatusRequest) returns (GetNetworkStatusResponse);
+}
+
+message GetNetworkStatusRequest {
+  string cluster_name = 1;
+}
+
+message NetworkInterfaceInfo {
+  string name = 1;
+  string ip_address = 2;
+  string mac_address = 3;
+}
+
+message GetNetworkStatusResponse {
+  string network_mode = 1;
+  string cni_plugin = 2;
+  string service_proxy_mode = 3;
+  string pod_cidr = 4;
+  string service_cidr = 5;
+  repeated NetworkInterfaceInfo interfaces = 6;
+}
+

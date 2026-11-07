@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  check-workspace:
+    name: Workspace Compile Check
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler libelf-dev clang llvm pkg-config libssl-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+
+      - name: Setup Rust caching
+        uses: Swatinem/rust-cache@v2
+
+      - name: Cargo Check (Workspace)
+        run: cargo check --workspace --all-targets
+
+      - name: Cargo Check (eBPF Kernel Workspace)
+        run: cargo check --manifest-path ebpf/Cargo.toml --all-targets
+

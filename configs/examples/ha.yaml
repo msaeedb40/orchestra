@@ -1,0 +1,45 @@
+apiVersion: orchestra.io/v1alpha1
+kind: Cluster
+metadata:
+  name: ha-cluster
+  labels:
+    environment: production
+    ha: "true"
+spec:
+  kubernetes_version: v1.31.2
+  nodes:
+    control_plane:
+      count: 3
+      image: kindest/node:v1.31.2
+    workers:
+      count: 5
+      image: kindest/node:v1.31.2
+  network:
+    mode: bridge
+    cni: calico
+    service_proxy: orchestra
+    pod_cidr: 10.244.0.0/16
+    service_cidr: 10.96.0.0/12
+    bridge_subnet: 172.30.0.0/16
+    bridge_name: orch-br0
+    api_server_port: 6443
+  ebpf:
+    enabled: true
+    pin_path: /sys/fs/bpf/orchestra
+    service_load_balancer: true
+    conntrack: true
+    programs:
+      - xdp
+      - tc
+  runtime:
+    image_pull_policy: Always
+    cgroup_driver: systemd
+  observability:
+    log_level: debug
+    log_format: json
+    metrics_enabled: true
+    metrics_port: 9090
+  security:
+    seccomp_profile: default
+    privileged_nodes: true
+    enable_mtls: true

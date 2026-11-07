@@ -1,0 +1,102 @@
+[workspace]
+resolver = "3"
+
+members = [
+    "crates/orchestra-cli",
+    "crates/orchestra-daemon",
+    "crates/orchestra-core",
+    "crates/orchestra-api",
+    "crates/orchestra-runtime",
+    "crates/orchestra-kubernetes",
+    "crates/orchestra-network",
+    "crates/orchestra-ebpf",
+    "crates/orchestra-storage",
+    "crates/orchestra-config",
+    "crates/orchestra-observability",
+    "crates/orchestra-security",
+    "crates/orchestra-common",
+    "tests",
+    "benches",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+authors = ["Orchestra Contributors"]
+repository = "https://github.com/msaeedb40/orchestra.git"
+homepage = "https://github.com/msaeedb40/orchestra"
+readme = "README.md"
+rust-version = "1.85.0"
+
+[workspace.dependencies]
+# Async Runtime & Core
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+futures = "0.3"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+toml = "0.8"
+
+# Error Handling
+thiserror = "2.0"
+anyhow = "1.0"
+
+# Benchmarking
+criterion = "0.5.1"
+
+# Logging & Telemetry
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# CLI Parsing
+clap = { version = "4.5", features = ["derive", "env"] }
+
+# gRPC & Protocol Buffers
+tonic = "0.12"
+prost = "0.13"
+prost-types = "0.13"
+tonic-build = "0.12"
+
+# Utilities
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+ipnet = { version = "2", features = ["serde"] }
+libc = "0.2"
+
+# Container Runtime
+bollard = "0.18"
+
+# Storage
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+# Internal Workspace Crates
+orchestra-common = { path = "crates/orchestra-common" }
+orchestra-core = { path = "crates/orchestra-core" }
+orchestra-config = { path = "crates/orchestra-config" }
+orchestra-storage = { path = "crates/orchestra-storage" }
+orchestra-runtime = { path = "crates/orchestra-runtime" }
+orchestra-kubernetes = { path = "crates/orchestra-kubernetes" }
+orchestra-network = { path = "crates/orchestra-network" }
+orchestra-ebpf = { path = "crates/orchestra-ebpf" }
+orchestra-api = { path = "crates/orchestra-api" }
+orchestra-observability = { path = "crates/orchestra-observability" }
+orchestra-security = { path = "crates/orchestra-security" }
+orchestra-daemon = { path = "crates/orchestra-daemon" }
+orchestra-cli = { path = "crates/orchestra-cli" }
+orchestra-ebpf-common = { path = "ebpf/orchestra-ebpf-common" }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true
+
+[profile.dev]
+debug = true
+
+[profile.test]
+debug = true

@@ -1,0 +1,43 @@
+# Rust target directories
+/target/
+**/target/
+
+# Cargo locks and backup files
+**/*.rs.bk
+*.pdb
+
+# Database files
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# IDE & Editor settings
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs and runtime artifacts
+logs/
+*.log
+/run/
+/var/run/
+
+# Test and benchmark artifacts
+coverage/
+*.profdata
+*.profraw
+
+# Temporary and build artifacts
+tmp/
+scratch/

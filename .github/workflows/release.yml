@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build Release Binaries
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler libelf-dev clang llvm gcc-aarch64-linux-gnu
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.85.0
+          targets: ${{ matrix.target }}
+
+      - name: Install cross-compilation tool
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build release binaries
+        run: |
+          if [ "${{ matrix.target }}" = "x86_64-unknown-linux-gnu" ]; then
+            cargo build --release --target ${{ matrix.target }} -p orchestra-cli -p orchestra-daemon
+          else
+            cross build --release --target ${{ matrix.target }} -p orchestra-cli -p orchestra-daemon
+          fi
+
+      - name: Package archive
+        run: |
+          ARCHIVE_NAME="orchestra-${{ github.ref_name }}-${{ matrix.target }}"
+          mkdir -p "${ARCHIVE_NAME}"
+          cp target/${{ matrix.target }}/release/orchestra "${ARCHIVE_NAME}/"
+          cp target/${{ matrix.target }}/release/orchestrad "${ARCHIVE_NAME}/"
+          cp README.md LICENSE "${ARCHIVE_NAME}/"
+          tar -czvf "${ARCHIVE_NAME}.tar.gz" "${ARCHIVE_NAME}"
+          sha256sum "${ARCHIVE_NAME}.tar.gz" > "${ARCHIVE_NAME}.tar.gz.sha256"
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            orchestra-*.tar.gz
+            orchestra-*.tar.gz.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

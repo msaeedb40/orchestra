@@ -1,0 +1,24 @@
+services:
+  orchestrad:
+    image: orchestra-daemon:latest
+    build:
+      context: ../..
+      dockerfile: deployments/docker/Dockerfile
+    container_name: orchestrad
+    network_mode: host
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /sys/fs/bpf:/sys/fs/bpf
+      - /lib/modules:/lib/modules:ro
+      - orchestra-data:/var/lib/orchestra
+    environment:
+      - RUST_LOG=info,orchestra_daemon=debug,orchestra_ebpf=debug
+    ports:
+      - "50051:50051"
+      - "9090:9090"
+
+volumes:
+  orchestra-data:
+

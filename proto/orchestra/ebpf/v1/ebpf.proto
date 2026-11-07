@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package orchestra.ebpf.v1;
+
+service EbpfService {
+  rpc GetEbpfStatus(GetEbpfStatusRequest) returns (GetEbpfStatusResponse);
+}
+
+message GetEbpfStatusRequest {}
+
+message EbpfProgramInfo {
+  string name = 1;
+  string program_type = 2;
+  string attach_point = 3;
+  bool is_loaded = 4;
+}
+
+message EbpfMapInfo {
+  string name = 1;
+  string map_type = 2;
+  uint32 max_entries = 3;
+  uint32 current_entries = 4;
+}
+
+message GetEbpfStatusResponse {
+  bool is_active = 1;
+  repeated EbpfProgramInfo programs = 2;
+  repeated EbpfMapInfo maps = 3;
+}
+

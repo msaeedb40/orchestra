@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package orchestra.cluster.v1;
+
+import "orchestra/common/v1/common.proto";
+
+service ClusterService {
+  rpc CreateCluster(CreateClusterRequest) returns (CreateClusterResponse);
+  rpc GetCluster(GetClusterRequest) returns (GetClusterResponse);
+  rpc ListClusters(ListClustersRequest) returns (ListClustersResponse);
+  rpc DeleteCluster(DeleteClusterRequest) returns (DeleteClusterResponse);
+  rpc StartCluster(StartClusterRequest) returns (StartClusterResponse);
+  rpc StopCluster(StopClusterRequest) returns (StopClusterResponse);
+}
+
+message ClusterSpec {
+  string name = 1;
+  string kubernetes_version = 2;
+  uint32 control_plane_nodes = 3;
+  uint32 worker_nodes = 4;
+  string node_image = 5;
+  string cni_plugin = 6;
+  string service_proxy_mode = 7;
+  string pod_cidr = 8;
+  string service_cidr = 9;
+  uint32 api_server_port = 10;
+}
+
+message ClusterStatus {
+  string state = 1;
+  uint32 control_plane_nodes = 2;
+  uint32 worker_nodes = 3;
+  string api_endpoint = 4;
+  orchestra.common.v1.Timestamp created_at = 5;
+  orchestra.common.v1.Timestamp updated_at = 6;
+}
+
+message ClusterInfo {
+  string id = 1;
+  ClusterSpec spec = 2;
+  ClusterStatus status = 3;
+}
+
+message CreateClusterRequest {
+  ClusterSpec spec = 1;
+}
+
+message CreateClusterResponse {
+  string operation_id = 1;
+  ClusterInfo cluster = 2;
+}
+
+message GetClusterRequest {
+  string name_or_id = 1;
+}
+
+message GetClusterResponse {
+  ClusterInfo cluster = 1;
+}
+
+message ListClustersRequest {}
+
+message ListClustersResponse {
+  repeated ClusterInfo clusters = 1;
+}
+
+message DeleteClusterRequest {
+  string name_or_id = 1;
+}
+
+message DeleteClusterResponse {
+  string operation_id = 1;
+  bool success = 2;
+}
+
+message StartClusterRequest {
+  string name_or_id = 1;
+}
+
+message StartClusterResponse {
+  string operation_id = 1;
+  bool success = 2;
+}
+
+message StopClusterRequest {
+  string name_or_id = 1;
+}
+
+message StopClusterResponse {
+  string operation_id = 1;
+  bool success = 2;
+}
+

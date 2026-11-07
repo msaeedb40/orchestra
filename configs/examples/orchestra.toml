@@ -1,0 +1,52 @@
+apiVersion = "orchestra.io/v1alpha1"
+kind = "Cluster"
+
+[metadata]
+name = "dev-cluster-toml"
+
+[metadata.labels]
+format = "toml"
+env = "local"
+
+[spec]
+kubernetes_version = "v1.31.2"
+
+[spec.nodes.control_plane]
+count = 1
+image = "kindest/node:v1.31.2"
+
+[spec.nodes.workers]
+count = 2
+image = "kindest/node:v1.31.2"
+
+[spec.network]
+mode = "bridge"
+cni = "kindnet"
+service_proxy = "orchestra"
+pod_cidr = "10.244.0.0/16"
+service_cidr = "10.96.0.0/12"
+bridge_subnet = "172.30.0.0/16"
+bridge_name = "orch-br0"
+api_server_port = 6443
+
+[spec.ebpf]
+enabled = true
+pin_path = "/sys/fs/bpf/orchestra"
+service_load_balancer = true
+conntrack = true
+programs = ["xdp", "tc"]
+
+[spec.runtime]
+image_pull_policy = "IfNotPresent"
+cgroup_driver = "systemd"
+
+[spec.observability]
+log_level = "info"
+log_format = "pretty"
+metrics_enabled = true
+metrics_port = 9090
+
+[spec.security]
+seccomp_profile = "default"
+privileged_nodes = true
+enable_mtls = false

@@ -1,0 +1,11 @@
+target/
+**/target/
+.git/
+.cargo/
+.idea/
+.vscode/
+*.sqlite*
+*.db*
+*.log
+.env*
+coverage/
