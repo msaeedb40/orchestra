@@ -22,13 +22,15 @@
 
 ## Key Features
 
-- **Rust-First Architecture**: Built with zero garbage collection, predictable memory safety, and high-concurrency async I/O via Tokio and Tonic.
-- **In-Kernel eBPF Service Dataplane**: Replaces `kube-proxy` with in-kernel XDP and TC `clsact` hooks, performing 5-tuple connection-tracking and DNAT translations before entering the standard network stack.
-- **Multi-Version Kubernetes Engine**: Multi-stage OCI container images packaging containerd, runc, systemd, and kubeadm across Kubernetes versions **v1.34 through v1.37**.
-- **CNI Flexibility**: Native support and conflict-free coexistence with **OrchestraNet**, **Flannel**, **Calico**, and **Cilium**.
-- **Hardened Container Security**: OCI-compliant Seccomp-BPF profiles, Linux cgroups v2 unified hierarchy validation, Linux namespace boundary auditing, and role-based access control (RBAC).
-- **Observability Built-In**: Prometheus metric exposition, real-time domain event streaming, JSON diagnostic reporters, and OpenTelemetry tracing.
-- **Enterprise Persistence**: SQLite transactional storage engine with foreign-key cascade deletes, operation journals, and checkpointing.
+- **Rust-First Architecture**: Zero garbage collection, predictable memory safety, and high-concurrency async I/O via Tokio and Tonic.
+- **OrchestraNet — Native CNI**: Orchestra's own lightweight host-routing CNI. Zero tunneling overhead, minimal footprint, and full eBPF dataplane integration out of the box.
+- **In-Kernel eBPF Service Dataplane**: Replaces `kube-proxy` with XDP and TC `clsact` hooks — 5-tuple connection-tracking and DNAT before the standard network stack.
+- **Multi-Version Kubernetes Engine**: OCI node images with containerd, runc, systemd, and kubeadm across **v1.34 – v1.37**.
+- **CNI Flexibility**: Conflict-free coexistence with **OrchestraNet** (default), **Flannel**, **Calico**, and **Cilium**.
+- **Dynamic Subnet Allocation**: Automatically selects the first available `/16` block in `172.16–172.31` — no manual subnet configuration needed.
+- **Hardened Container Security**: Seccomp-BPF profiles, cgroups v2 validation, namespace auditing, and gRPC RBAC.
+- **Observability Built-In**: Prometheus metrics, OpenTelemetry tracing, real-time event streaming, and JSON diagnostics.
+- **Enterprise Persistence**: SQLite with foreign-key cascades, operation journals, reconciliation checkpoints, and desired-state recovery.
 
 ---
 
@@ -38,20 +40,27 @@
                            ┌───────────────────────┐
                            │     orchestra CLI     │
                            └───────────┬───────────┘
-                                       │ gRPC / IPC
+                                       │ gRPC / Unix Socket
                                        ▼
                            ┌───────────────────────┐
                            │   orchestrad Daemon   │
+                           │  (Reconciliation Loop)│
                            └───────────┬───────────┘
                                        │
         ┌──────────────────────────────┼──────────────────────────────┐
         ▼                              ▼                              ▼
 ┌───────────────────┐        ┌───────────────────┐        ┌───────────────────┐
 │ orchestra-runtime │        │ orchestra-k8s     │        │  orchestra-ebpf   │
-│ (Docker Engine)   │        │ (Kubeadm & CNI)   │        │ (XDP/TC Dataplane)│
+│ (Docker Engine)   │        │ (kubeadm + CNI)   │        │ (XDP/TC Dataplane)│
 └───────────────────┘        └───────────────────┘        └───────────────────┘
         │                              │                              │
         └──────────────────────────────┼──────────────────────────────┘
+                                       ▼
+                           ┌───────────────────────┐
+                           │   orchestra-network   │
+                           │ (OrchestraNet + IPAM) │
+                           └───────────────────────┘
+                                       │
                                        ▼
                            ┌───────────────────────┐
                            │   orchestra-storage   │
@@ -65,41 +74,56 @@ For full architectural details, see the [Architecture Documentation](docs/archit
 
 ## Quickstart
 
-### 1. Build and Install
+### One-command setup
 
 ```bash
 git clone https://github.com/msaeedb40/orchestra.git
 cd orchestra
-./scripts/build.sh
 
-# Install binaries to PATH
-sudo cp target/release/orchestra target/release/orchestrad /usr/local/bin/
+# Preflight check → build → install → start systemd service
+./setup.sh
 ```
 
-### 2. Launch the Daemon
+`setup.sh` validates your environment, compiles release binaries, installs them to `~/.local/bin`, and configures `orchestrad` as a systemd user service with automatic Docker socket detection (supports both standard Docker and Docker Desktop).
+
+### Step-by-step
 
 ```bash
-orchestrad --listen-addr 127.0.0.1:50051
+./setup.sh --check    # Validate system requirements
+./setup.sh --deps     # Install system packages (needs sudo)
+./setup.sh --build    # Build workspace + node images
+./setup.sh --install  # Install binaries to ~/.local/bin
+./setup.sh --daemon   # Configure & start orchestrad as systemd user service
 ```
 
-### 3. Provision a Kubernetes Cluster
+### Verify
 
 ```bash
-orchestra cluster create \
-  --name demo-k8s \
-  --k8s-version v1.36.6 \
+systemctl --user status orchestrad
+orchestra system ping
+# → OK: pong
+```
+
+---
+
+## Provision a Kubernetes Cluster
+
+```bash
+# Create a cluster with OrchestraNet CNI + eBPF service proxy
+orchestra cluster create my-cluster \
+  --kubernetes-version v1.37.1 \
   --control-plane 1 \
   --workers 2 \
   --cni orchestranet \
   --proxy-mode orchestra
-```
 
-### 4. Inspect Status
+# Watch status
+orchestra cluster get my-cluster
 
-```bash
-orchestra cluster list
-orchestra node list --cluster demo-k8s
-orchestra network status
+# List nodes
+orchestra node list my-cluster
+
+# Inspect eBPF dataplane
 orchestra ebpf status
 ```
 
@@ -115,49 +139,124 @@ kind: Cluster
 metadata:
   name: prod-cluster
 spec:
-  kubernetesVersion: v1.36.6
+  kubernetesVersion: v1.37.1
   nodes:
     controlPlane:
-      count: 3
+      count: 1
     workers:
-      count: 5
+      count: 3
   network:
-    cni: orchestranet
+    cni: orchestranet       # Orchestra's native CNI (default)
     podCidr: 10.244.0.0/16
     serviceCidr: 10.96.0.0/12
   proxy:
-    mode: orchestra
+    mode: orchestra         # In-kernel XDP/TC eBPF service proxy
+  ebpf:
+    enabled: true
 ```
+
+```bash
+orchestra cluster create --config prod-cluster.yaml
+```
+
+See [Configuration Schema Reference](docs/configuration/schema.md) for all fields.
+
+---
+
+## CNI Options
+
+| CNI | Mode | Best For |
+|-----|------|----------|
+| `orchestranet` *(default)* | Host routing | Dev & production — zero overhead, full eBPF integration |
+| `flannel` | VXLAN overlay | Multi-host overlay networking |
+| `calico` | BGP routing | Enterprise network policy |
+| `cilium` | eBPF native | Native eBPF routing (use `--proxy-mode cni`) |
+| `none` | BYO | Custom CNI deployments |
+
+---
+
+## Node Image Matrix
+
+| Image Tag | Kubernetes Version |
+|-----------|-------------------|
+| `orchestra-node:1.37.1` | v1.37.1 |
+| `orchestra-node:1.36.6` | v1.36.6 |
+| `orchestra-node:1.35.9` | v1.35.9 |
+| `orchestra-node:1.34.12` | v1.34.12 |
+
+```bash
+# Build all versions
+./scripts/build-node-images.sh
+
+# Build a specific version
+./scripts/build-node-images.sh 1.37.1
+```
+
+---
+
+## Deployment Options
+
+### systemd user service (recommended for local dev)
+
+```bash
+./setup.sh --daemon
+systemctl --user status orchestrad
+journalctl --user -u orchestrad -f
+```
+
+### Docker Compose
+
+```bash
+# Standard Docker socket
+docker compose -f deployments/docker/docker-compose.yml up -d
+
+# Docker Desktop
+docker compose -f deployments/docker/docker-compose.yml --profile docker-desktop up -d
+```
+
+### Helm (management Kubernetes cluster)
+
+```bash
+helm install orchestra deployments/kubernetes/orchestra/ \
+  -n orchestra --create-namespace
+kubectl -n orchestra port-forward svc/orchestra 50051:50051
+```
+
+See [Helm Deployment Guide](docs/user-guide/helm-deployment.md) for full configuration.
 
 ---
 
 ## Testing & Quality Assurance
 
-Orchestra features an exhaustive, zero-failure test suite spanning all layers:
-
 ```bash
-# Run 96 unit, integration, and E2E tests across the workspace
+# Run unit, integration, and E2E tests across the workspace
 ./scripts/test.sh
 
-# Verify formatting and strict Clippy linter
+# Formatting and strict Clippy linting (both workspaces)
 ./scripts/lint.sh
 
 # Run Criterion benchmarks
 cargo bench -p orchestra-benchmarks -- --test
+
+# Preflight environment check
+./scripts/preflight.sh
 ```
 
 ---
 
 ## Documentation
 
-- [Architecture Overview](docs/architecture/overview.md)
-- [eBPF Dataplane & BPF Maps](docs/architecture/ebpf-dataplane.md)
-- [Security & Isolation Model](docs/architecture/security-model.md)
-- [Quickstart Guide](docs/user-guide/quickstart.md)
-- [CLI Reference Manual](docs/user-guide/cli-reference.md)
-- [CNI Integration & Coordination](docs/user-guide/cni-integration.md)
-- [Developer Environment Setup](docs/development/setup.md)
-- [Configuration Schema Reference](docs/configuration/schema.md)
+| Guide | Description |
+|-------|-------------|
+| [Quickstart Guide](docs/user-guide/quickstart.md) | Build, install, create first cluster |
+| [CLI Reference](docs/user-guide/cli-reference.md) | All commands, flags, and exit codes |
+| [CNI Integration](docs/user-guide/cni-integration.md) | OrchestraNet, Flannel, Calico, Cilium |
+| [Configuration Schema](docs/configuration/schema.md) | Full YAML/TOML field reference |
+| [Helm Deployment](docs/user-guide/helm-deployment.md) | Deploy into an existing K8s cluster |
+| [Developer Setup](docs/development/setup.md) | Build from source, testing, IDE setup |
+| [Architecture Overview](docs/architecture/overview.md) | Crate hierarchy and subsystem design |
+| [eBPF Dataplane](docs/architecture/ebpf-dataplane.md) | XDP/TC hooks, BPF maps, conntrack |
+| [Security Model](docs/architecture/security-model.md) | Capabilities, seccomp, RBAC |
 
 ---
 
