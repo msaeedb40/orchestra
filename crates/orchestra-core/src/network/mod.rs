@@ -55,9 +55,9 @@ impl fmt::Display for ServiceProxyMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum CniPlugin {
-    /// Lightweight point-to-point / routing CNI (default for dev).
+    /// Orchestra's native lightweight CNI with eBPF dataplane (default).
     #[default]
-    Kindnet,
+    OrchestraNet,
     /// Flannel overlay (VXLAN) CNI.
     Flannel,
     /// Project Calico standard CNI with BGP routing.
@@ -71,7 +71,7 @@ pub enum CniPlugin {
 impl fmt::Display for CniPlugin {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Kindnet => write!(f, "kindnet"),
+            Self::OrchestraNet => write!(f, "orchestranet"),
             Self::Flannel => write!(f, "flannel"),
             Self::Calico => write!(f, "calico"),
             Self::Cilium => write!(f, "cilium"),
@@ -134,7 +134,7 @@ mod tests {
     fn test_network_modes() {
         assert_eq!(NetworkMode::default(), NetworkMode::Bridge);
         assert_eq!(ServiceProxyMode::default(), ServiceProxyMode::Orchestra);
-        assert_eq!(CniPlugin::default(), CniPlugin::Kindnet);
+        assert_eq!(CniPlugin::default(), CniPlugin::OrchestraNet);
     }
 
     #[test]

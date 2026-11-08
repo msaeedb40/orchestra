@@ -27,7 +27,7 @@ spec:
     workers:
       count: 2
   network:
-    cni: kindnet
+    cni: orchestranet
     podCidr: 10.244.0.0/16
     serviceCidr: 10.96.0.0/12
   proxy:
@@ -57,7 +57,7 @@ spec:
         control_plane_nodes: config.spec.nodes.control_plane.count as u32,
         worker_nodes: config.spec.nodes.workers.count as u32,
         node_image: format!("orchestra-node:{}", &config.spec.kubernetes_version[1..]),
-        cni_plugin: "kindnet".to_string(),
+        cni_plugin: "orchestranet".to_string(),
         service_proxy_mode: "orchestra".to_string(),
         pod_cidr: config.spec.network.pod_cidr.clone(),
         service_cidr: config.spec.network.service_cidr.clone(),

@@ -86,8 +86,8 @@ pub enum ClusterCommands {
         #[arg(long, default_value = "orchestra-node:1.36.6")]
         node_image: String,
 
-        /// CNI plugin (kindnet, flannel, calico, cilium, none)
-        #[arg(long, default_value = "kindnet")]
+        /// CNI plugin (orchestranet, flannel, calico, cilium, none)
+        #[arg(long, default_value = "orchestranet")]
         cni: String,
 
         /// Service dataplane proxy mode (orchestra, cni, kube-proxy)

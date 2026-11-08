@@ -123,7 +123,7 @@ pub fn validate_config(config: &OrchestraConfig) -> Result<(), ConfigError> {
     if config.spec.network.service_proxy == ServiceProxyMode::Cni
         && matches!(
             config.spec.network.cni,
-            CniPlugin::None | CniPlugin::Kindnet
+            CniPlugin::None | CniPlugin::OrchestraNet
         )
     {
         return Err(ConfigError::ValidationError(format!(

@@ -21,7 +21,7 @@ image = "kindest/node:v1.31.2"
 
 [spec.network]
 mode = "bridge"
-cni = "kindnet"
+cni = "orchestranet"
 service_proxy = "orchestra"
 pod_cidr = "10.244.0.0/16"
 service_cidr = "10.96.0.0/12"

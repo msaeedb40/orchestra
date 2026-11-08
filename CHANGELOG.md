@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Multi-version `kubeadm` init configuration generator with kube-proxy phase skip support.
   - Worker node join configuration generator.
   - `admin.conf` server endpoint rewriting for localhost host-port forwarding.
-  - Declarative CNI manifest generation for Kindnet and Flannel.
+  - Declarative CNI manifest generation for OrchestraNet and Flannel.
   - `ClusterBootstrapper` coordinator.
 - **Daemon Core (`orchestra-daemon`)**:
   - State manager (`DaemonState`) coupling SQLite database and container runtime provider.

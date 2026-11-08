@@ -46,7 +46,7 @@ impl ClusterSpec {
             worker_nodes: 2,
             node_image: DEFAULT_NODE_IMAGE.to_string(),
             network_mode: NetworkMode::Bridge,
-            cni_plugin: CniPlugin::Kindnet,
+            cni_plugin: CniPlugin::OrchestraNet,
             service_proxy_mode: ServiceProxyMode::Orchestra,
             pod_cidr: DEFAULT_POD_CIDR.to_string(),
             service_cidr: DEFAULT_SERVICE_CIDR.to_string(),

@@ -25,7 +25,7 @@
 - **Rust-First Architecture**: Built with zero garbage collection, predictable memory safety, and high-concurrency async I/O via Tokio and Tonic.
 - **In-Kernel eBPF Service Dataplane**: Replaces `kube-proxy` with in-kernel XDP and TC `clsact` hooks, performing 5-tuple connection-tracking and DNAT translations before entering the standard network stack.
 - **Multi-Version Kubernetes Engine**: Multi-stage OCI container images packaging containerd, runc, systemd, and kubeadm across Kubernetes versions **v1.34 through v1.37**.
-- **CNI Flexibility**: Native support and conflict-free coexistence with **Kindnet**, **Flannel**, **Calico**, and **Cilium**.
+- **CNI Flexibility**: Native support and conflict-free coexistence with **OrchestraNet**, **Flannel**, **Calico**, and **Cilium**.
 - **Hardened Container Security**: OCI-compliant Seccomp-BPF profiles, Linux cgroups v2 unified hierarchy validation, Linux namespace boundary auditing, and role-based access control (RBAC).
 - **Observability Built-In**: Prometheus metric exposition, real-time domain event streaming, JSON diagnostic reporters, and OpenTelemetry tracing.
 - **Enterprise Persistence**: SQLite transactional storage engine with foreign-key cascade deletes, operation journals, and checkpointing.
@@ -90,7 +90,7 @@ orchestra cluster create \
   --k8s-version v1.36.6 \
   --control-plane 1 \
   --workers 2 \
-  --cni kindnet \
+  --cni orchestranet \
   --proxy-mode orchestra
 ```
 
@@ -122,7 +122,7 @@ spec:
     workers:
       count: 5
   network:
-    cni: kindnet
+    cni: orchestranet
     podCidr: 10.244.0.0/16
     serviceCidr: 10.96.0.0/12
   proxy:

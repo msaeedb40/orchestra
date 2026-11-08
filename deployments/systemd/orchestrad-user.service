@@ -1,0 +1,37 @@
+[Unit]
+Description=Orchestra Kubernetes Cluster Orchestration Daemon (user)
+Documentation=https://github.com/msaeedb40/orchestra
+After=docker.service
+
+[Service]
+Type=simple
+
+# Auto-detect Docker socket: Docker Desktop first, then standard
+# Override with: systemctl --user edit orchestrad
+# [Service]
+# Environment=DOCKER_HOST=unix:///var/run/docker.sock
+Environment=DOCKER_HOST=unix://%h/.docker/desktop/docker.sock
+Environment=RUST_LOG=info,orchestra_daemon=debug
+
+ExecStartPre=/bin/sh -c 'test -S "$${DOCKER_HOST#unix://}" || export DOCKER_HOST=unix:///var/run/docker.sock'
+ExecStart=%h/.local/bin/orchestrad \
+    --listen-addr 127.0.0.1:50051 \
+    --db-path %h/.local/share/orchestra/orchestra.db
+
+Restart=always
+RestartSec=5s
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=65536
+LimitMEMLOCK=infinity
+TasksMax=infinity
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=orchestrad
+
+[Install]
+WantedBy=default.target
+

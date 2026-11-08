@@ -7,6 +7,7 @@ use orchestra_api::network::network_service_server::NetworkServiceServer;
 use orchestra_api::node::node_service_server::NodeServiceServer;
 use orchestra_api::system::system_service_server::SystemServiceServer;
 use orchestra_daemon::{DaemonState, GrpcServer};
+use orchestra_daemon::reconciliation::run_reconciler;
 use orchestra_runtime::{DockerClient, DockerRuntimeProvider};
 use orchestra_storage::Database;
 use std::net::SocketAddr;
@@ -42,7 +43,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = DockerClient::connect()?;
     let runtime = DockerRuntimeProvider::new(client);
     let state = DaemonState::new(db, runtime);
-    let grpc = GrpcServer::new(state);
+    let grpc = GrpcServer::new(state.clone());
+
+    // Spawn the reconciliation loop in the background before accepting gRPC
+    tokio::spawn(run_reconciler(state));
 
     info!(addr = %args.listen_addr, "Binding gRPC API server");
 

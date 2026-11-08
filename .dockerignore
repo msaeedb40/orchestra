@@ -9,3 +9,20 @@ target/
 *.log
 .env*
 coverage/
+
+# Docs (not needed in build context)
+docs/
+*.md
+!README.md
+
+# Deployment configs
+deployments/
+images/
+
+# CI
+.github/
+
+# Editor
+*.swp
+*.swo
+.DS_Store

@@ -1,0 +1,121 @@
+# Default values for Orchestra Helm chart.
+# This chart deploys the Orchestra daemon (`orchestrad`) into a management Kubernetes cluster.
+
+replicaCount: 1
+
+image:
+  repository: orchestra-daemon
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+
+# Security capabilities needed for Docker & eBPF management
+securityContext:
+  privileged: true
+  capabilities:
+    add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - SYS_PTRACE
+      - IPC_LOCK
+
+daemon:
+  listenAddr: "0.0.0.0:50051"
+  dbPath: "/var/lib/orchestra/orchestra.db"
+  logLevel: "info,orchestra_daemon=debug,orchestra_runtime=debug"
+
+# How the daemon communicates with the Docker Engine
+docker:
+  # Connection mode: "socket" (bind-mount host socket) or "tcp" (remote daemon)
+  mode: "socket"
+  # Host path to Docker socket when mode is "socket"
+  socketPath: "/var/run/docker.sock"
+  # Remote Docker daemon address when mode is "tcp" (e.g. "tcp://192.168.1.50:2376")
+  tcpHost: ""
+  tlsVerify: false
+  tlsSecretName: ""
+
+# eBPF host filesystem mounts
+ebpf:
+  enabled: true
+  bpfFsPath: "/sys/fs/bpf"
+  modulesPath: "/lib/modules"
+
+# Persistent storage for the SQLite database
+persistence:
+  enabled: true
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+  annotations: {}
+
+service:
+  type: ClusterIP
+  port: 50051
+  metricsPort: 9090
+
+metrics:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+livenessProbe:
+  tcpSocket:
+    port: 50051
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  tcpSocket:
+    port: 50051
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 2
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+

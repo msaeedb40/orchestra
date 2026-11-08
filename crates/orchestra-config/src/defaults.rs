@@ -12,7 +12,7 @@ use std::str::FromStr;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum Profile {
-    /// Minimal footprint: 1 CP, 1 Worker, Kindnet, fast startup.
+    /// Minimal footprint: 1 CP, 1 Worker, OrchestraNet, fast startup.
     #[default]
     Dev,
     /// Standard production: 1 CP, 3 Workers, Cilium eBPF dataplane.
@@ -56,7 +56,7 @@ pub fn create_profile_config(name: &str, profile: Profile) -> OrchestraConfig {
             spec.nodes.control_plane.count = 1;
             spec.nodes.workers.count = 1;
             spec.network.mode = NetworkMode::Bridge;
-            spec.network.cni = CniPlugin::Kindnet;
+            spec.network.cni = CniPlugin::OrchestraNet;
             spec.network.service_proxy = ServiceProxyMode::Orchestra;
             spec.ebpf.enabled = true;
             spec.observability.log_level = "info".to_string();

@@ -1,0 +1,19 @@
+apiVersion: v2
+name: orchestra
+description: Orchestra — Kubernetes cluster orchestration platform powered by Rust, Docker containers, and eBPF networking.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - kubernetes
+  - orchestration
+  - docker
+  - ebpf
+  - rust
+home: https://github.com/msaeedb40/orchestra
+sources:
+  - https://github.com/msaeedb40/orchestra
+maintainers:
+  - name: Orchestra Contributors
+    url: https://github.com/msaeedb40/orchestra
+

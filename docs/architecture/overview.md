@@ -41,7 +41,7 @@ The workspace strictly enforces a unidirectional dependency hierarchy:
 4. **`orchestra-storage`**: SQLite transactional persistence with foreign key cascades, append-only operation journals, checkpointing, and advisory locks.
 5. **`orchestra-runtime`**: Async container runtime engine powered by Bollard/Docker, managing container lifecycles, healthchecks, exec streams, and volume bindings.
 6. **`orchestra-kubernetes`**: Multi-version Kubernetes bootstrap engine (`v1.34` - `v1.37`), kubeadm `InitConfiguration` and `JoinConfiguration` generator, `admin.conf` kubeconfig rewriter, and CNI manifest generator.
-7. **`orchestra-network`**: Linux bridge and veth pair manager, netlink socket integration, IPAM CIDR allocation, and CNI coexistence coordinator.
+7. **`orchestra-network`**: Linux bridge and veth pair manager, netlink socket integration, dynamic IPAM CIDR allocation (auto-selects first free `/16` in `172.16–172.31`), and CNI coexistence coordinator. Includes `OrchestraNet` — Orchestra's native host-routing CNI (the default), and `CniCoordinator` which enforces proxy-mode compatibility rules (e.g. blocking `proxy=orchestra` when Cilium is selected).
 8. **`orchestra-ebpf` & `ebpf/*`**: In-kernel XDP and TC clsact service proxy, connection tracking table, weighted round-robin endpoint selection, and userspace mirror maps (`BpfMapManager`, `ServiceDataplane`).
 9. **`orchestra-observability`**: Prometheus text metrics exporter, ring-buffered domain event stream, JSON diagnostic reporter, and OpenTelemetry-compatible tracing.
 10. **`orchestra-security`**: Linux cgroups v2 checker, namespace isolation auditor, capability whitelist/blacklist policy, OCI seccomp filter profiles, RBAC token manager, and security audit logger.

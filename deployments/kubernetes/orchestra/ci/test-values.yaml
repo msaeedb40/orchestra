@@ -1,0 +1,34 @@
+# CI test values — lighter resources, no persistence, quick validation
+replicaCount: 1
+
+image:
+  repository: orchestra-daemon
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+daemon:
+  listenAddr: "0.0.0.0:50051"
+  dbPath: "/tmp/orchestra-ci.db"
+  logLevel: "debug"
+
+docker:
+  mode: socket
+  socketPath: "/var/run/docker.sock"
+
+ebpf:
+  enabled: false
+
+persistence:
+  enabled: false
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+metrics:
+  enabled: false
+

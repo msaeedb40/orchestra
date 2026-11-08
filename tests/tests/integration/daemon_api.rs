@@ -50,7 +50,7 @@ async fn test_daemon_api_lifecycle() {
         control_plane_nodes: 1,
         worker_nodes: 2,
         node_image: "orchestra-node:1.36.6".to_string(),
-        cni_plugin: "kindnet".to_string(),
+        cni_plugin: "orchestranet".to_string(),
         service_proxy_mode: "orchestra".to_string(),
         pod_cidr: "10.244.0.0/16".to_string(),
         service_cidr: "10.96.0.0/12".to_string(),

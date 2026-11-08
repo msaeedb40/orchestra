@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "orchestra.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "orchestra.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  # SQLite requires a single replica unless using external storage
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "orchestra.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        # Roll deployment when configmap changes
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "orchestra.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "orchestra.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: orchestrad
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --listen-addr
+            - {{ .Values.daemon.listenAddr | quote }}
+            - --db-path
+            - {{ .Values.daemon.dbPath | quote }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "orchestra.fullname" . }}
+          ports:
+            - name: grpc
+              containerPort: 50051
+              protocol: TCP
+            {{- if .Values.metrics.enabled }}
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+            {{- end }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: orchestra-db
+              mountPath: /var/lib/orchestra
+            {{- if eq .Values.docker.mode "socket" }}
+            - name: docker-socket
+              mountPath: {{ .Values.docker.socketPath }}
+            {{- end }}
+            {{- if .Values.ebpf.enabled }}
+            - name: bpf-fs
+              mountPath: {{ .Values.ebpf.bpfFsPath }}
+            - name: kernel-modules
+              mountPath: /lib/modules
+              readOnly: true
+            {{- end }}
+            {{- if and (eq .Values.docker.mode "tcp") .Values.docker.tlsVerify .Values.docker.tlsSecretName }}
+            - name: docker-tls
+              mountPath: /certs/docker
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: orchestra-db
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "orchestra.fullname" . }}-db
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- if eq .Values.docker.mode "socket" }}
+        - name: docker-socket
+          hostPath:
+            path: {{ .Values.docker.socketPath }}
+            type: Socket
+        {{- end }}
+        {{- if .Values.ebpf.enabled }}
+        - name: bpf-fs
+          hostPath:
+            path: {{ .Values.ebpf.bpfFsPath }}
+            type: Directory
+        - name: kernel-modules
+          hostPath:
+            path: {{ .Values.ebpf.modulesPath }}
+            type: Directory
+        {{- end }}
+        {{- if and (eq .Values.docker.mode "tcp") .Values.docker.tlsVerify .Values.docker.tlsSecretName }}
+        - name: docker-tls
+          secret:
+            secretName: {{ .Values.docker.tlsSecretName }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+

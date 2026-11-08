@@ -62,9 +62,9 @@ impl RuntimeProvider for DockerRuntimeProvider {
         let cluster_name = cluster.name();
         let network_name = cluster_network_name(cluster_name);
 
-        // 1. Ensure cluster network exists
+        // 1. Ensure cluster network exists (auto-detect free /16 subnet)
         self.network_mgr
-            .create_cluster_network(cluster_name, "172.20.0.0/16")
+            .create_cluster_network(cluster_name, "")
             .await?;
 
         // 2. Ensure node image is available

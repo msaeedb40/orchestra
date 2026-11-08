@@ -1,0 +1,53 @@
+Thank you for installing {{ .Chart.Name }} v{{ .Chart.AppVersion }}.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Orchestra — Kubernetes Cluster Orchestration Platform
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Release name:    {{ .Release.Name }}
+Namespace:       {{ .Release.Namespace }}
+Docker mode:     {{ .Values.docker.mode }}
+
+1. Wait for the daemon to become ready:
+
+   kubectl -n {{ .Release.Namespace }} rollout status deployment/{{ include "orchestra.fullname" . }}
+
+2. Forward the gRPC port locally:
+
+   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "orchestra.fullname" . }} 50051:50051
+
+3. Verify the daemon is reachable:
+
+   orchestra system ping
+
+4. Create your first cluster:
+
+   orchestra cluster create dev \
+     --control-plane 1 \
+     --workers 2 \
+     --cni orchestranet
+
+5. Watch cluster status:
+
+   orchestra cluster list
+   orchestra cluster get dev
+
+{{- if not .Values.persistence.enabled }}
+
+⚠  Persistence is DISABLED. The SQLite database will be lost on pod restart.
+   Enable it in values.yaml: persistence.enabled=true
+
+{{- end }}
+{{- if eq .Values.docker.mode "socket" }}
+
+ℹ  Using Docker socket at {{ .Values.docker.socketPath }}.
+   Make sure this path is accessible on the node running the Orchestra pod.
+
+{{- else if eq .Values.docker.mode "tcp" }}
+
+ℹ  Connecting to remote Docker daemon at {{ .Values.docker.tcpHost }}.
+
+{{- end }}
+
+📖 Docs: https://github.com/msaeedb40/orchestra/tree/main/docs
+

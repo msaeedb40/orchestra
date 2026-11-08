@@ -17,6 +17,45 @@ impl NetworkManager {
         Self { client }
     }
 
+    /// Finds the first available /16 subnet in the 172.16.0.0/12 private range (172.16 - 172.31).
+    pub async fn find_available_subnet(&self) -> Result<String, RuntimeError> {
+        let networks = self
+            .client
+            .inner()
+            .list_networks::<String>(None)
+            .await
+            .map_err(|e| RuntimeError::Network(format!("Failed to list networks: {e}")))?;
+
+        let mut used = std::collections::HashSet::new();
+        for net in networks {
+            if let Some(ipam) = net.ipam {
+                if let Some(configs) = ipam.config {
+                    for cfg in configs {
+                        if let Some(subnet) = cfg.subnet {
+                            if let Some(rest) = subnet.strip_prefix("172.") {
+                                if let Some(octet_str) = rest.split('.').next() {
+                                    if let Ok(octet) = octet_str.parse::<u8>() {
+                                        used.insert(octet);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for octet in 16..=31 {
+            if !used.contains(&octet) {
+                return Ok(format!("172.{octet}.0.0/16"));
+            }
+        }
+
+        Err(RuntimeError::Network(
+            "No available /16 subnet found in 172.16.0.0 - 172.31.0.0 range".to_string(),
+        ))
+    }
+
     /// Creates a dedicated Docker bridge network for the given cluster.
     /// Returns the Docker network ID.
     pub async fn create_cluster_network(
@@ -32,7 +71,13 @@ impl NetworkManager {
             return Ok(id);
         }
 
-        info!(network = %network_name, subnet, "Creating cluster Docker network");
+        let assigned_subnet = if subnet.is_empty() {
+            self.find_available_subnet().await?
+        } else {
+            subnet.to_string()
+        };
+
+        info!(network = %network_name, subnet = %assigned_subnet, "Creating cluster Docker network");
 
         let mut labels = HashMap::new();
         labels.insert("orchestra.io/cluster".to_string(), cluster_name.to_string());
@@ -40,7 +85,7 @@ impl NetworkManager {
 
         let ipam = Ipam {
             config: Some(vec![bollard::models::IpamConfig {
-                subnet: Some(subnet.to_string()),
+                subnet: Some(assigned_subnet),
                 ..Default::default()
             }]),
             ..Default::default()

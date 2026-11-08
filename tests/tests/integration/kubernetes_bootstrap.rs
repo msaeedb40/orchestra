@@ -65,12 +65,12 @@ users:
 
 #[test]
 fn test_cni_manifest_generation() {
-    let mut kindnet_spec = ClusterSpec::new("kindnet-cluster", "v1.36.6");
-    kindnet_spec.cni_plugin = CniPlugin::Kindnet;
-    let kindnet_manifest =
-        generate_cni_manifest(&kindnet_spec).expect("Kindnet manifest generation failed");
-    assert!(kindnet_manifest.contains("kindnet"));
-    assert!(kindnet_manifest.contains("10.244.0.0/16"));
+    let mut orchestranet_spec = ClusterSpec::new("orchestranet-cluster", "v1.36.6");
+    orchestranet_spec.cni_plugin = CniPlugin::OrchestraNet;
+    let orchestranet_manifest =
+        generate_cni_manifest(&orchestranet_spec).expect("OrchestraNet manifest generation failed");
+    assert!(orchestranet_manifest.contains("orchestranet"));
+    assert!(orchestranet_manifest.contains("10.244.0.0/16"));
 
     let mut flannel_spec = ClusterSpec::new("flannel-cluster", "v1.36.6");
     flannel_spec.cni_plugin = CniPlugin::Flannel;

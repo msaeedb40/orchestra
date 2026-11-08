@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "orchestra.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "orchestra.labels" . | nindent 4 }}
+data:
+  RUST_LOG: {{ .Values.daemon.logLevel | quote }}
+  ORCHESTRAD_LISTEN_ADDR: {{ .Values.daemon.listenAddr | quote }}
+  ORCHESTRAD_DB_PATH: {{ .Values.daemon.dbPath | quote }}
+  {{- if eq .Values.docker.mode "socket" }}
+  DOCKER_HOST: {{ printf "unix://%s" .Values.docker.socketPath | quote }}
+  {{- else if eq .Values.docker.mode "tcp" }}
+  DOCKER_HOST: {{ .Values.docker.tcpHost | quote }}
+  {{- if .Values.docker.tlsVerify }}
+  DOCKER_TLS_VERIFY: "1"
+  {{- end }}
+  {{- end }}
+

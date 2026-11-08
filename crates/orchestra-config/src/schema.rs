@@ -214,7 +214,7 @@ pub struct NetworkConfigSpec {
     /// Network topology mode (bridge, host, overlay).
     #[serde(default)]
     pub mode: NetworkMode,
-    /// Selected CNI plugin (kindnet, flannel, calico, cilium, none).
+    /// Selected CNI plugin (orchestranet, flannel, calico, cilium, none).
     #[serde(default)]
     pub cni: CniPlugin,
     /// Service dataplane owner (orchestra, cni, kube-proxy).

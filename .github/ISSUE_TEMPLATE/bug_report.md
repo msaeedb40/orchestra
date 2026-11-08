@@ -23,7 +23,7 @@ A clear and concise description of what you expected to happen.
 - Host OS & Kernel (`uname -a`):
 - Architecture (`x86_64` / `aarch64`):
 - Kubernetes version targeted (`v1.34` - `v1.37`):
-- CNI Plugin & Proxy Mode (`kindnet` / `flannel` / `cilium`, `orchestra` / `cni`):
+- CNI Plugin & Proxy Mode (`orchestranet` / `flannel` / `cilium`, `orchestra` / `cni`):
 
 ### Diagnostic Logs
 If applicable, run `orchestra system diagnostics` or provide relevant `orchestrad` logs:

@@ -311,11 +311,11 @@ fn node_mounts() -> Vec<Mount> {
         },
         Mount {
             target: Some("/sys/fs/cgroup".to_string()),
-            source: Some("/sys/fs/cgroup".to_string()),
-            typ: Some(MountTypeEnum::BIND),
+            typ: Some(MountTypeEnum::TMPFS),
             read_only: Some(false),
-            bind_options: Some(bollard::models::MountBindOptions {
-                propagation: Some(bollard::models::MountBindOptionsPropagationEnum::RSHARED),
+            tmpfs_options: Some(bollard::models::MountTmpfsOptions {
+                // 256 MB is plenty for the cgroup hierarchy
+                size_bytes: Some(256 * 1024 * 1024),
                 ..Default::default()
             }),
             ..Default::default()

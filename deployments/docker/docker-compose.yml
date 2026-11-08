@@ -1,24 +1,87 @@
+# ──────────────────────────────────────────────────────────────────────
+# Orchestra Daemon — Docker Compose
+#
+# Profiles:
+#   default              Standard Docker socket (Linux /var/run/docker.sock)
+#   docker-desktop       Docker Desktop socket (~/.docker/desktop/docker.sock)
+#
+# Usage:
+#   # Standard (default):
+#   docker compose up -d
+#
+#   # Docker Desktop:
+#   docker compose --profile docker-desktop up -d
+#
+#   # Build from source:
+#   docker compose up -d --build
+#
+#   # View logs:
+#   docker compose logs -f orchestrad
+# ──────────────────────────────────────────────────────────────────────
+
+x-common: &common
+  image: orchestra-daemon:latest
+  build:
+    context: ../..
+    dockerfile: deployments/docker/Dockerfile
+  container_name: orchestrad
+  restart: unless-stopped
+  network_mode: host
+  privileged: true
+  volumes:
+    - /sys/fs/bpf:/sys/fs/bpf
+    - /lib/modules:/lib/modules:ro
+    - orchestra-data:/var/lib/orchestra
+  environment:
+    RUST_LOG: "info,orchestra_daemon=debug,orchestra_runtime=debug,orchestra_ebpf=debug"
+    ORCHESTRAD_LISTEN_ADDR: "127.0.0.1:50051"
+    ORCHESTRAD_DB_PATH: "/var/lib/orchestra/orchestra.db"
+  healthcheck:
+    test: ["CMD", "orchestra", "system", "ping"]
+    interval: 15s
+    timeout: 5s
+    start_period: 15s
+    retries: 3
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "5"
+
 services:
+  # ── Standard Docker socket (default profile) ────────────────────────
   orchestrad:
-    image: orchestra-daemon:latest
-    build:
-      context: ../..
-      dockerfile: deployments/docker/Dockerfile
-    container_name: orchestrad
-    network_mode: host
-    privileged: true
-    restart: unless-stopped
+    <<: *common
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /sys/fs/bpf:/sys/fs/bpf
       - /lib/modules:/lib/modules:ro
       - orchestra-data:/var/lib/orchestra
     environment:
-      - RUST_LOG=info,orchestra_daemon=debug,orchestra_ebpf=debug
-    ports:
-      - "50051:50051"
-      - "9090:9090"
+      RUST_LOG: "info,orchestra_daemon=debug,orchestra_runtime=debug,orchestra_ebpf=debug"
+      DOCKER_HOST: "unix:///var/run/docker.sock"
+      ORCHESTRAD_LISTEN_ADDR: "127.0.0.1:50051"
+      ORCHESTRAD_DB_PATH: "/var/lib/orchestra/orchestra.db"
+
+  # ── Docker Desktop socket (docker-desktop profile) ─────────────────
+  orchestrad-desktop:
+    <<: *common
+    profiles:
+      - docker-desktop
+    container_name: orchestrad-desktop
+    volumes:
+      - /run/user/1000/docker.sock:/var/run/docker.sock
+      - /sys/fs/bpf:/sys/fs/bpf
+      - /lib/modules:/lib/modules:ro
+      - orchestra-data:/var/lib/orchestra
+    environment:
+      RUST_LOG: "info,orchestra_daemon=debug,orchestra_runtime=debug,orchestra_ebpf=debug"
+      DOCKER_HOST: "unix:///var/run/docker.sock"
+      ORCHESTRAD_LISTEN_ADDR: "127.0.0.1:50051"
+      ORCHESTRAD_DB_PATH: "/var/lib/orchestra/orchestra.db"
 
 volumes:
   orchestra-data:
-
+    driver: local
+    labels:
+      orchestra.io/managed: "true"

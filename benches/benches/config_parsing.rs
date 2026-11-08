@@ -20,7 +20,7 @@ spec:
       count: 10
       image: orchestra-node:1.36.6
   network:
-    cni: kindnet
+    cni: orchestranet
     podCidr: 10.244.0.0/16
     serviceCidr: 10.96.0.0/12
   proxy:

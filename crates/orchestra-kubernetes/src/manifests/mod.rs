@@ -6,19 +6,19 @@ use orchestra_core::network::CniPlugin;
 /// Generates standard CNI plugin manifest based on cluster specification.
 pub fn generate_cni_manifest(spec: &ClusterSpec) -> Option<String> {
     match spec.cni_plugin {
-        CniPlugin::Kindnet => Some(kindnet_manifest(&spec.pod_cidr)),
+        CniPlugin::OrchestraNet => Some(orchestranet_manifest(&spec.pod_cidr)),
         CniPlugin::Flannel => Some(flannel_manifest(&spec.pod_cidr)),
         CniPlugin::Calico | CniPlugin::Cilium | CniPlugin::None => None,
     }
 }
 
-/// Generates a lightweight kindnet-compatible CNI manifest.
-fn kindnet_manifest(pod_cidr: &str) -> String {
+/// Generates Orchestra's native lightweight CNI manifest.
+fn orchestranet_manifest(pod_cidr: &str) -> String {
     format!(
         r#"apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kindnet-config
+  name: orchestranet-config
   namespace: kube-system
 data:
   pod-cidr: "{pod_cidr}"
@@ -53,9 +53,9 @@ mod tests {
     #[test]
     fn test_cni_manifest_generation() {
         let mut spec = ClusterSpec::new("dev", "v1.36.6");
-        spec.cni_plugin = CniPlugin::Kindnet;
+        spec.cni_plugin = CniPlugin::OrchestraNet;
         let manifest = generate_cni_manifest(&spec).unwrap();
-        assert!(manifest.contains("kindnet-config"));
+        assert!(manifest.contains("orchestranet-config"));
         assert!(manifest.contains("10.244.0.0/16"));
     }
 }

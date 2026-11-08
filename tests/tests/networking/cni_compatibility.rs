@@ -5,9 +5,9 @@ use orchestra_network::cni::CniCoordinator;
 
 #[test]
 fn test_cni_ebpf_compatibility_matrix() {
-    // 1. Kindnet + Orchestra eBPF: Valid and optimal
+    // 1. OrchestraNet + Orchestra eBPF: Valid and optimal
     assert!(
-        CniCoordinator::validate_compatibility(CniPlugin::Kindnet, ServiceProxyMode::Orchestra)
+        CniCoordinator::validate_compatibility(CniPlugin::OrchestraNet, ServiceProxyMode::Orchestra)
             .is_ok()
     );
 
