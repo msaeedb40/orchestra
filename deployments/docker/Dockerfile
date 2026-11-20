@@ -33,6 +33,7 @@ COPY crates/orchestra-security/Cargo.toml   crates/orchestra-security/Cargo.toml
 COPY crates/orchestra-common/Cargo.toml     crates/orchestra-common/Cargo.toml
 COPY tests/Cargo.toml                       tests/Cargo.toml
 COPY benches/Cargo.toml                     benches/Cargo.toml
+COPY ebpf/orchestra-ebpf-common/Cargo.toml  ebpf/orchestra-ebpf-common/Cargo.toml
 COPY proto/                                 proto/
 
 # Create dummy lib/main stubs so `cargo fetch` can resolve the full graph
@@ -41,9 +42,25 @@ RUN find crates -name Cargo.toml -exec sh -c \
      mkdir -p "$dir/src"; \
      echo "fn main() {}" > "$dir/src/main.rs" 2>/dev/null; \
      echo "" > "$dir/src/lib.rs" 2>/dev/null' _ {} \; && \
-    mkdir -p tests/tests benches/benches && \
+    mkdir -p tests/src benches/src ebpf/orchestra-ebpf-common/src \
+             benches/benches \
+             tests/tests/integration tests/tests/networking tests/tests/ebpf tests/tests/e2e && \
     echo "" > tests/src/lib.rs && \
-    echo "" > benches/src/lib.rs
+    echo "" > benches/src/lib.rs && \
+    echo "" > ebpf/orchestra-ebpf-common/src/lib.rs && \
+    touch benches/benches/ebpf_maps.rs \
+          benches/benches/ipam.rs \
+          benches/benches/config_parsing.rs \
+          benches/benches/kubeadm_generation.rs \
+          tests/tests/integration/daemon_api.rs \
+          tests/tests/integration/docker_runtime.rs \
+          tests/tests/integration/kubernetes_bootstrap.rs \
+          tests/tests/integration/storage.rs \
+          tests/tests/networking/service_lb.rs \
+          tests/tests/networking/cni_compatibility.rs \
+          tests/tests/ebpf/map_operations.rs \
+          tests/tests/ebpf/program_loading.rs \
+          tests/tests/e2e/cluster_lifecycle.rs
 
 RUN cargo fetch
 
