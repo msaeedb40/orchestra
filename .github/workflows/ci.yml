@@ -30,7 +30,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.85.0
+          toolchain: 1.99.1
 
       - name: Setup Rust caching
         uses: Swatinem/rust-cache@v2

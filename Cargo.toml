@@ -27,7 +27,7 @@ authors = ["Orchestra Contributors"]
 repository = "https://github.com/msaeedb40/orchestra.git"
 homepage = "https://github.com/msaeedb40/orchestra"
 readme = "README.md"
-rust-version = "1.85.0"
+rust-version = "1.99.1"
 
 [workspace.dependencies]
 # Async Runtime & Core
@@ -71,7 +71,7 @@ libc = "0.2"
 bollard = "0.18"
 
 # Storage
-rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite = { version = "0.41", features = ["bundled"] }
 
 # Internal Workspace Crates
 orchestra-common = { path = "crates/orchestra-common" }

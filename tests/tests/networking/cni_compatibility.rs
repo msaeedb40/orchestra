@@ -7,8 +7,11 @@ use orchestra_network::cni::CniCoordinator;
 fn test_cni_ebpf_compatibility_matrix() {
     // 1. OrchestraNet + Orchestra eBPF: Valid and optimal
     assert!(
-        CniCoordinator::validate_compatibility(CniPlugin::OrchestraNet, ServiceProxyMode::Orchestra)
-            .is_ok()
+        CniCoordinator::validate_compatibility(
+            CniPlugin::OrchestraNet,
+            ServiceProxyMode::Orchestra
+        )
+        .is_ok()
     );
 
     // 2. Flannel + Orchestra eBPF: Valid

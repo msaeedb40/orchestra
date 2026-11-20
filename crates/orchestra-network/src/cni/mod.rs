@@ -37,8 +37,11 @@ mod tests {
     #[test]
     fn test_cni_compatibility_validation() {
         assert!(
-            CniCoordinator::validate_compatibility(CniPlugin::OrchestraNet, ServiceProxyMode::Orchestra)
-                .is_ok()
+            CniCoordinator::validate_compatibility(
+                CniPlugin::OrchestraNet,
+                ServiceProxyMode::Orchestra
+            )
+            .is_ok()
         );
         assert!(
             CniCoordinator::validate_compatibility(CniPlugin::Flannel, ServiceProxyMode::Orchestra)

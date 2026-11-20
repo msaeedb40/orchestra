@@ -35,7 +35,7 @@ jobs:
       - name: Build image for Kubernetes v${{ matrix.k8s_version }}
         run: |
           docker build \
-            --build-arg K8S_VERSION="${{ matrix.k8s_version }}" \
+            --build-arg KUBERNETES_VERSION="v${{ matrix.k8s_version }}" \
             --tag orchestra-node:${{ matrix.k8s_version }} \
             images/orchestra-node-v${{ matrix.k8s_version }}
 

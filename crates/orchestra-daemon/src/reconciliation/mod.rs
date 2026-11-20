@@ -18,12 +18,16 @@ use tracing::{error, info, warn};
 const RECONCILE_INTERVAL: Duration = Duration::from_secs(5);
 
 /// Maximum time to wait for a node container to become Running before marking Failed.
+#[allow(dead_code)]
 const NODE_START_TIMEOUT: Duration = Duration::from_secs(120);
 
 /// Launch the background reconciliation task. This should be spawned with
 /// `tokio::spawn` before the gRPC server starts serving.
 pub async fn run_reconciler(state: DaemonState) {
-    info!("Reconciliation loop started (interval={:?})", RECONCILE_INTERVAL);
+    info!(
+        "Reconciliation loop started (interval={:?})",
+        RECONCILE_INTERVAL
+    );
     loop {
         if let Err(e) = reconcile_once(&state).await {
             error!(error = %e, "Reconciliation pass failed");
@@ -85,12 +89,22 @@ async fn reconcile_pending(
 
     for i in 0..cluster.spec.control_plane_nodes {
         let name = format!("{}-cp-{}", cluster.spec.name, i);
-        let node = Node::new(NodeId::generate(), cluster.id.clone(), &name, NodeRole::ControlPlane);
+        let node = Node::new(
+            NodeId::generate(),
+            cluster.id.clone(),
+            &name,
+            NodeRole::ControlPlane,
+        );
         nodes.push(node);
     }
     for i in 0..cluster.spec.worker_nodes {
         let name = format!("{}-worker-{}", cluster.spec.name, i);
-        let node = Node::new(NodeId::generate(), cluster.id.clone(), &name, NodeRole::Worker);
+        let node = Node::new(
+            NodeId::generate(),
+            cluster.id.clone(),
+            &name,
+            NodeRole::Worker,
+        );
         nodes.push(node);
     }
 
@@ -247,7 +261,3 @@ async fn reconcile_bootstrapping(
 
     Ok(())
 }
-
-// Suppress unused warning until NODE_START_TIMEOUT is wired to a future
-// timeout-aware provisioning path.
-const _: Duration = NODE_START_TIMEOUT;
