@@ -78,6 +78,8 @@ enabled = true
 
 ## Field Reference
 
+> **Note:** The `--cni` and `--proxy-mode` CLI flags map to `spec.network.cni` and `spec.proxy.mode` respectively. These are parsed by the daemon's gRPC server via `FromStr` implementations on the `CniPlugin` and `ServiceProxyMode` enums in `orchestra-core::network`.
+
 ### `metadata`
 
 | Field | Type | Required | Description |
@@ -155,7 +157,7 @@ enabled = true
 
 The daemon validates all manifests before provisioning. Key rules:
 
-1. **`proxy.mode = cni`** requires `cni` to be `calico` or `cilium` (not `orchestranet`, `flannel`, or `none`).
+1. **`proxy.mode = cni`** requires `cni` to be `calico` or `cilium` (not `orchestranet`, `flannel`, or `none`). The daemon server now properly parses `cni_plugin` and `service_proxy_mode` from the gRPC `CreateClusterRequest` via `FromStr` implementations — in earlier versions these fields were silently ignored and defaulted to OrchestraNet.
 2. **`proxy.mode = orchestra`** is blocked when `cni = cilium`.
 3. **`controlPlane.count`** must be `1` or `3` (single or HA quorum).
 4. **`kubernetesVersion`** must match a supported node image: `v1.34.x`, `v1.35.x`, `v1.36.x`, or `v1.37.x`.

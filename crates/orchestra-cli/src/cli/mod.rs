@@ -70,8 +70,8 @@ pub enum ClusterCommands {
         #[arg(short, long)]
         config: Option<PathBuf>,
 
-        /// Kubernetes version (e.g. v1.36.6)
-        #[arg(long, default_value = "v1.36.6")]
+        /// Kubernetes version (e.g. v1.37.1)
+        #[arg(long, default_value = "v1.37.1")]
         k8s_version: String,
 
         /// Number of control plane nodes
@@ -83,7 +83,7 @@ pub enum ClusterCommands {
         workers: usize,
 
         /// Node container image
-        #[arg(long, default_value = "orchestra-node:1.36.6")]
+        #[arg(long, default_value = "orchestra-node:1.37.1")]
         node_image: String,
 
         /// CNI plugin (orchestranet, flannel, calico, cilium, none)

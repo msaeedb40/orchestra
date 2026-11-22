@@ -3,7 +3,7 @@
 # Pre-fetch all Cargo dependencies before copying source so rebuilds
 # only re-compile changed crates, not the entire dependency graph.
 # ──────────────────────────────────────────────────────────────────────
-FROM rust:1.99.1-bookworm AS deps
+FROM rust:1-bookworm AS deps
 
 WORKDIR /build
 

@@ -142,6 +142,16 @@ impl ClusterService for GrpcServer {
         if !spec_proto.node_image.is_empty() {
             spec.node_image = spec_proto.node_image;
         }
+        if !spec_proto.cni_plugin.is_empty() {
+            if let Ok(cni) = spec_proto.cni_plugin.parse() {
+                spec.cni_plugin = cni;
+            }
+        }
+        if !spec_proto.service_proxy_mode.is_empty() {
+            if let Ok(mode) = spec_proto.service_proxy_mode.parse() {
+                spec.service_proxy_mode = mode;
+            }
+        }
 
         let cluster_id = ClusterId::generate();
         let cluster = Cluster::new(cluster_id.clone(), spec);
@@ -280,9 +290,32 @@ impl NodeService for GrpcServer {
 
     async fn list_nodes(
         &self,
-        _request: Request<ListNodesRequest>,
+        request: Request<ListNodesRequest>,
     ) -> Result<Response<ListNodesResponse>, Status> {
-        Ok(Response::new(ListNodesResponse { nodes: Vec::new() }))
+        let req = request.into_inner();
+        let cluster = get_cluster_by_name(&self.state.db, &req.cluster_name)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?
+            .ok_or_else(|| Status::not_found(format!("Cluster '{}' not found", req.cluster_name)))?;
+
+        let nodes = orchestra_storage::repository::node::list_nodes(&self.state.db, &cluster.id)
+            .await
+            .map_err(|e| Status::internal(e.to_string()))?;
+
+        let node_infos = nodes
+            .into_iter()
+            .map(|n| NodeInfo {
+                id: n.id.to_string(),
+                cluster_id: n.cluster_id.to_string(),
+                name: n.name,
+                role: n.role.to_string(),
+                state: n.status.state.to_string(),
+                ip_address: n.status.internal_ip.map(|ip| ip.to_string()).unwrap_or_default(),
+                container_id: n.status.container_id.unwrap_or_default(),
+            })
+            .collect();
+
+        Ok(Response::new(ListNodesResponse { nodes: node_infos }))
     }
 }
 

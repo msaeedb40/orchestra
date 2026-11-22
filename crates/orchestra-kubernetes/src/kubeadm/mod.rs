@@ -12,7 +12,7 @@ pub fn generate_init_config(
     let skip_kube_proxy = matches!(spec.service_proxy_mode, ServiceProxyMode::Orchestra);
 
     let mut config = format!(
-        r#"apiVersion: kubeadm.k8s.io/v1beta3
+        r#"apiVersion: kubeadm.k8s.io/v1beta4
 kind: InitConfiguration
 localAPIEndpoint:
   advertiseAddress: "0.0.0.0"
@@ -21,7 +21,7 @@ nodeRegistration:
   criSocket: "unix:///run/containerd/containerd.sock"
   imagePullPolicy: IfNotPresent
 ---
-apiVersion: kubeadm.k8s.io/v1beta3
+apiVersion: kubeadm.k8s.io/v1beta4
 kind: ClusterConfiguration
 kubernetesVersion: "{k8s_version}"
 controlPlaneEndpoint: "{endpoint}:6443"
@@ -33,6 +33,11 @@ apiServer:
     - "127.0.0.1"
     - "localhost"
     - "{endpoint}"
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: cgroupfs
+failSwapOn: false
 "#,
         k8s_version = spec.kubernetes_version,
         endpoint = control_plane_endpoint,
@@ -61,7 +66,7 @@ pub fn generate_join_config(
     ca_cert_hash: &str,
 ) -> String {
     format!(
-        r#"apiVersion: kubeadm.k8s.io/v1beta3
+        r#"apiVersion: kubeadm.k8s.io/v1beta4
 kind: JoinConfiguration
 discovery:
   bootstrapToken:
@@ -71,6 +76,11 @@ discovery:
       - "{hash}"
 nodeRegistration:
   criSocket: "unix:///run/containerd/containerd.sock"
+---
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+cgroupDriver: cgroupfs
+failSwapOn: false
 "#,
         endpoint = control_plane_endpoint,
         token = token,
@@ -91,6 +101,7 @@ mod tests {
         assert!(yaml.contains("controlPlaneEndpoint: \"172.20.0.2:6443\""));
         assert!(yaml.contains("podSubnet: \"10.244.0.0/16\""));
         assert!(yaml.contains("serviceSubnet: \"10.96.0.0/12\""));
+        assert!(yaml.contains("cgroupDriver: cgroupfs"));
     }
 
     #[test]
@@ -99,5 +110,6 @@ mod tests {
         assert!(yaml.contains("apiServerEndpoint: \"172.20.0.2:6443\""));
         assert!(yaml.contains("token: \"abcdef.0123456789abcdef\""));
         assert!(yaml.contains("sha256:123456"));
+        assert!(yaml.contains("cgroupDriver: cgroupfs"));
     }
 }

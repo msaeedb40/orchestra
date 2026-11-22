@@ -131,9 +131,19 @@ impl RuntimeProvider for DockerRuntimeProvider {
         let ip_address = info
             .network_settings
             .as_ref()
-            .and_then(|ns| ns.ip_address.as_ref())
-            .filter(|ip| !ip.is_empty())
-            .and_then(|ip| Ipv4Addr::from_str(ip).ok());
+            .and_then(|ns| {
+                ns.ip_address
+                    .as_ref()
+                    .filter(|ip| !ip.is_empty())
+                    .cloned()
+                    .or_else(|| {
+                        ns.networks
+                            .as_ref()?
+                            .values()
+                            .find_map(|net| net.ip_address.as_ref().filter(|ip| !ip.is_empty()).cloned())
+                    })
+            })
+            .and_then(|ip| Ipv4Addr::from_str(&ip).ok());
 
         let mut port_mappings = Vec::new();
         if let Some(settings) = &info.network_settings {

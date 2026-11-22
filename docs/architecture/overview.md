@@ -49,3 +49,71 @@ The workspace strictly enforces a unidirectional dependency hierarchy:
 12. **`orchestra-daemon` (`orchestrad`)**: Background reconciliation daemon maintaining cluster topologies, handling asynchronous workflows, and serving gRPC requests.
 13. **`orchestra-cli` (`orchestra`)**: Ergonomic Clap-driven command-line interface supporting tabular, JSON, and YAML outputs.
 
+## Reconciliation Loop
+
+The daemon drives cluster lifecycle through a finite state machine in `orchestra-daemon::reconciliation`:
+
+```
+  Pending ──► Creating ──► Bootstrapping ──► Running
+                 │               │
+                 └──► Failed ◄───┘
+```
+
+### State Transitions
+
+1. **Pending → Creating**: Triggered by `CreateClusterRequest`. The daemon provisions Docker containers for the control plane (`{name}-cp-0`) and worker nodes (`{name}-worker-{n}`) via `orchestra-runtime`, each running the `orchestra-node:{version}` image. Containers are connected to a dedicated Docker bridge network.
+
+2. **Creating → Bootstrapping**: Once all node containers are running (health check passes), the daemon advances to bootstrapping.
+
+3. **Bootstrapping**: The daemon executes the following sequence:
+   - Runs `kubeadm init --config=/tmp/kubeadm-config.yaml` on the control-plane container.
+   - Extracts the kubeconfig from `/etc/kubernetes/super-admin.conf` (with fallback to `admin.conf` for older versions).
+   - Creates RBAC bindings required for worker joins:
+     - `kubernetes-admin-binding` ClusterRoleBinding (binds `kubernetes-admin` user to `cluster-admin` role).
+     - `system:discovery` RoleBinding on `kube-public` namespace (allows `system:unauthenticated` to read the `cluster-info` ConfigMap).
+   - Generates a `kubeadm join` command and executes it on each worker container sequentially.
+
+4. **Bootstrapping → Running**: After all workers join successfully, the daemon writes the kubeconfig to `~/.kube/orchestra-{name}.conf` and `~/.kube/config`, then marks the cluster as `Running`.
+
+5. **→ Failed**: Any unrecoverable error during creating or bootstrapping transitions to `Failed` with the error recorded in the operation journal.
+
+## Mount Propagation & cgroup v2
+
+Orchestra node containers require specific mount and cgroup configuration to run kubelet and CNI plugins inside Docker-in-Docker:
+
+### Mount Propagation
+
+The node `entrypoint.sh` runs at container boot:
+
+```bash
+mount --make-rshared /
+mount --make-rshared /sys
+```
+
+This ensures that volume mounts created by kubelet (for pod volumes) and CNI plugins (for eBPF filesystems at `/sys/fs/bpf`) propagate correctly between the host mount namespace and pod mount namespaces. Without `rshared` propagation, Cilium Envoy pods fail with:
+
+```
+path "/sys/fs/bpf" is mounted on "/sys" but it is not a shared or slave mount
+```
+
+### cgroup v2 Subtree Delegation
+
+On unified cgroup v2 hosts (Docker Desktop, modern Linux), the entrypoint migrates all root-cgroup processes into an `init.scope` sub-cgroup before enabling controllers:
+
+```bash
+mkdir -p /sys/fs/cgroup/init.scope
+echo $$ > /sys/fs/cgroup/init.scope/cgroup.procs
+for p in $(cat /sys/fs/cgroup/cgroup.procs); do
+    echo "$p" > /sys/fs/cgroup/init.scope/cgroup.procs
+done
+for c in $(cat /sys/fs/cgroup/cgroup.controllers); do
+    echo "+$c" > /sys/fs/cgroup/cgroup.subtree_control
+done
+```
+
+This is required because the cgroup v2 "no internal processes" rule forbids enabling subtree controllers while processes exist directly in a domain cgroup. Without this delegation, kubelet fails with:
+
+```
+cannot enter cgroupv2 "/sys/fs/cgroup/kubepods" with domain controllers -- it is in an invalid state
+```
+

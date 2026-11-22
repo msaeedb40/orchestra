@@ -56,6 +56,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /sys/fs/bpf:/sys/fs/bpf
       - /lib/modules:/lib/modules:ro
+      - ~/.kube:/root/.kube
       - orchestra-data:/var/lib/orchestra
     environment:
       RUST_LOG: "info,orchestra_daemon=debug,orchestra_runtime=debug,orchestra_ebpf=debug"
@@ -73,6 +74,7 @@ services:
       - /run/user/1000/docker.sock:/var/run/docker.sock
       - /sys/fs/bpf:/sys/fs/bpf
       - /lib/modules:/lib/modules:ro
+      - ~/.kube:/root/.kube
       - orchestra-data:/var/lib/orchestra
     environment:
       RUST_LOG: "info,orchestra_daemon=debug,orchestra_runtime=debug,orchestra_ebpf=debug"

@@ -58,10 +58,30 @@ impl<R: RuntimeProvider> ClusterBootstrapper<R> {
             )));
         }
 
-        // 3. Extract admin kubeconfig
+        // 3. Setup RBAC permissions and extract admin kubeconfig
+        let _ = self
+            .runtime
+            .exec_in_node(
+                container_id,
+                &[
+                    "sh",
+                    "-c",
+                    "kubectl --kubeconfig=/etc/kubernetes/super-admin.conf create clusterrolebinding kubernetes-admin-binding --clusterrole=cluster-admin --user=kubernetes-admin 2>/dev/null || true; \
+                     kubectl --kubeconfig=/etc/kubernetes/super-admin.conf create rolebinding -n kube-public cluster-info --clusterrole=system:discovery --group=system:authenticated --group=system:unauthenticated 2>/dev/null || true",
+                ],
+            )
+            .await;
+
         let (exit_code, raw_kubeconfig) = self
             .runtime
-            .exec_in_node(container_id, &["cat", "/etc/kubernetes/admin.conf"])
+            .exec_in_node(
+                container_id,
+                &[
+                    "sh",
+                    "-c",
+                    "if [ -f /etc/kubernetes/super-admin.conf ]; then cat /etc/kubernetes/super-admin.conf; else cat /etc/kubernetes/admin.conf; fi",
+                ],
+            )
             .await
             .map_err(|e| KubernetesError::KubeconfigError(e.to_string()))?;
 

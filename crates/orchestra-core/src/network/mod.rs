@@ -51,6 +51,18 @@ impl fmt::Display for ServiceProxyMode {
     }
 }
 
+impl std::str::FromStr for ServiceProxyMode {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "orchestra" => Ok(Self::Orchestra),
+            "cni" | "cni-proxy" => Ok(Self::Cni),
+            "kube-proxy" | "kubeproxy" => Ok(Self::KubeProxy),
+            other => Err(format!("Unknown service proxy mode: {other}")),
+        }
+    }
+}
+
 /// Container Network Interface (CNI) implementation options.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
@@ -76,6 +88,20 @@ impl fmt::Display for CniPlugin {
             Self::Calico => write!(f, "calico"),
             Self::Cilium => write!(f, "cilium"),
             Self::None => write!(f, "none"),
+        }
+    }
+}
+
+impl std::str::FromStr for CniPlugin {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "orchestranet" => Ok(Self::OrchestraNet),
+            "flannel" => Ok(Self::Flannel),
+            "calico" => Ok(Self::Calico),
+            "cilium" => Ok(Self::Cilium),
+            "none" => Ok(Self::None),
+            other => Err(format!("Unknown CNI plugin: {other}")),
         }
     }
 }

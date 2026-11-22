@@ -10,7 +10,7 @@ This document covers compiling, testing, and developing on Orchestra.
 
 | Tool | Required | Your System |
 |------|----------|-------------|
-| Rust (stable) | 1.85.0+ | managed via `rustup` |
+| Rust (stable) | 1.99.1+ | managed via `rustup` |
 | Rust (nightly) | latest | required for eBPF programs |
 | Clang / LLVM | 16+ | for eBPF compilation |
 | Protobuf Compiler | any | for Tonic gRPC code generation |
@@ -123,7 +123,7 @@ The root [`setup.sh`](../../setup.sh) replaces all manual steps for the common d
 ./setup.sh --daemon           # Configure + start systemd user service
 ./setup.sh --smoke-test       # Create and delete a test cluster
 ./setup.sh --no-ebpf          # Skip eBPF build (faster CI loops)
-./setup.sh --node-version 1.36.6  # Build a specific node image version
+./setup.sh --node-version 1.37.1 # Build a specific node image version
 ```
 
 After `./setup.sh`, the `orchestra` and `orchestrad` binaries are on your `PATH` and `orchestrad` is running as a systemd user service.
@@ -229,7 +229,7 @@ This enforces:
 Clippy thresholds are configured in [`clippy.toml`](../../clippy.toml):
 - Cognitive complexity limit: **30**
 - Max function arguments: **8**
-- MSRV: **1.85.0**
+- MSRV: **1.99.1**
 
 To auto-fix formatting before committing:
 
@@ -316,6 +316,72 @@ orchestrad --listen-addr 127.0.0.1:50051 \
 | `RUST_LOG` | Log level for `orchestrad` | `info,orchestra_daemon=debug` |
 | `DOCKER_HOST` | Docker socket or TCP endpoint | `unix:///home/user/.docker/desktop/docker.sock` |
 | `RUST_BACKTRACE` | Full backtraces on panic | `RUST_BACKTRACE=1` |
+
+---
+
+## Node Image Entrypoint
+
+Each `orchestra-node:{version}` Docker image (see `images/orchestra-node-v{VERSION}/`) runs an `entrypoint.sh` that prepares the container to function as a Kubernetes node. The entrypoint performs these steps in order:
+
+### 1. Mount Propagation
+
+```bash
+mount --make-rshared /
+mount --make-rshared /sys
+```
+
+Marks the root and `/sys` filesystems as recursively shared. This is required for:
+- **kubelet**: Pod volume mounts must propagate between mount namespaces.
+- **Cilium / eBPF CNIs**: The BPF filesystem at `/sys/fs/bpf` must be accessible to pods via shared mount propagation. Without this, Cilium Envoy pods fail with `path "/sys/fs/bpf" is mounted on "/sys" but it is not a shared or slave mount`.
+
+### 2. cgroup v2 Subtree Delegation
+
+On unified cgroup v2 hosts (Docker Desktop, modern Linux kernels), the entrypoint migrates all root-cgroup processes into `/sys/fs/cgroup/init.scope` and enables subtree controllers:
+
+```bash
+mkdir -p /sys/fs/cgroup/init.scope
+echo $$ > /sys/fs/cgroup/init.scope/cgroup.procs
+# Move all root processes...
+for c in $(cat /sys/fs/cgroup/cgroup.controllers); do
+    echo "+$c" > /sys/fs/cgroup/cgroup.subtree_control
+done
+```
+
+This satisfies the cgroup v2 "no internal processes" rule — without it, kubelet fails with `cannot enter cgroupv2 "/sys/fs/cgroup/kubepods" with domain controllers -- it is in an invalid state`.
+
+### 3. systemctl Shim
+
+Since the node containers don't run a full init system, the entrypoint installs a `/usr/local/bin/systemctl` shim that translates kubelet lifecycle commands:
+
+- **`start` / `restart`**: Launches `/usr/bin/kubelet` with the correct bootstrap arguments:
+  - `--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf`
+  - `--kubeconfig=/etc/kubernetes/kubelet.conf`
+  - `--config=/var/lib/kubelet/config.yaml`
+  - Plus `KUBELET_KUBEADM_ARGS` from `/var/lib/kubelet/kubeadm-flags.env`
+- **`stop`**: Sends SIGTERM to the kubelet process.
+- **`daemon-reload` / `enable`**: No-ops (no systemd to reload).
+- **`is-active` / `status`**: Checks if the kubelet process is alive via `pgrep`.
+
+### 4. containerd Daemon
+
+The entrypoint starts `containerd` with CRI enabled, which kubeadm and kubelet use as the container runtime for Kubernetes pods.
+
+### Available Node Images
+
+| Image Tag | Kubernetes Version | Dockerfile |
+|-----------|-------------------|------------|
+| `orchestra-node:1.37.1` | v1.37.x | `images/orchestra-node-v1.37.1/Dockerfile` |
+| `orchestra-node:1.36.5` | v1.36.x | `images/orchestra-node-v1.36.5/Dockerfile` |
+| `orchestra-node:1.35.9` | v1.35.x | `images/orchestra-node-v1.35.9/Dockerfile` |
+| `orchestra-node:1.34.12` | v1.34.x | `images/orchestra-node-v1.34.12/Dockerfile` |
+
+Build a specific image:
+
+```bash
+docker build --load -t orchestra-node:1.37.1 \
+  -f images/orchestra-node-v1.37.1/Dockerfile \
+  images/orchestra-node-v1.37.1/
+```
 
 ---
 

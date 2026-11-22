@@ -7,7 +7,7 @@ This guide walks you through installing Orchestra, starting the daemon, and spin
 - **Linux OS** (Kernel 5.15+ recommended, cgroups v2 unified hierarchy)
 - **Docker Engine** (24.0+) or **Docker Desktop** for Linux
 - **Kubectl** (`curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"`)
-- **Rust toolchain** (stable ≥ 1.85 + nightly) — install via [rustup](https://rustup.rs)
+- **Rust toolchain** (stable ≥ 1.99.1 + nightly) — install via [rustup](https://rustup.rs)
 
 > **Tip:** Run `./scripts/preflight.sh` after cloning to check all requirements in one pass.
 
@@ -77,6 +77,16 @@ orchestra cluster create my-cluster \
   --proxy-mode orchestra
 ```
 
+Or with **Cilium CNI** and kube-proxy replacement:
+
+```bash
+orchestra cluster create my-cluster \
+  --kubernetes-version v1.37.1 \
+  --cni cilium \
+  --proxy-mode cni \
+  --workers 2
+```
+
 Watch cluster state converge:
 
 ```bash
@@ -130,6 +140,40 @@ kubectl get nodes
 
 ---
 
+## 5b. Installing Cilium (when using `--cni cilium`)
+
+If you created the cluster with `--cni cilium --proxy-mode cni`, install Cilium after the control plane is up:
+
+```bash
+export KUBECONFIG=~/.kube/orchestra-my-cluster.conf
+
+# Remove kube-proxy (Cilium replaces it)
+kubectl -n kube-system delete daemonset kube-proxy
+
+# Install Cilium v1.20.5 with full kube-proxy replacement
+cilium install --version 1.20.5 \
+  --set kubeProxyReplacement=true \
+  --set k8sServiceHost=<CONTROL_PLANE_IP> \
+  --set k8sServicePort=6443
+
+# Or via Helm:
+# helm install cilium cilium/cilium --version 1.20.5 \
+#   --namespace kube-system \
+#   --set kubeProxyReplacement=true
+
+# Verify Cilium is healthy
+cilium status
+
+# All nodes should transition to Ready
+kubectl get nodes
+```
+
+> **Note:** Orchestra node containers automatically run `mount --make-rshared /` and `mount --make-rshared /sys` at boot, which is required for Cilium's eBPF filesystem mounts and CNI volume propagation.
+
+> **DNS Loop Fix:** If CoreDNS pods crash with a loop detection error, edit the `coredns` ConfigMap in `kube-system` to forward to external resolvers (`8.8.8.8`, `1.1.1.1`) instead of `/etc/resolv.conf`, and remove the `loop` plugin.
+
+---
+
 ## 6. Teardown
 
 ```bash
@@ -178,7 +222,7 @@ See [Configuration Schema](../configuration/schema.md) for all fields.
 | Image Tag | Kubernetes Version |
 |-----------|-------------------|
 | `orchestra-node:1.37.1` | v1.37.1 |
-| `orchestra-node:1.36.6` | v1.36.6 |
+| `orchestra-node:1.36.5` | v1.36.5 |
 | `orchestra-node:1.35.9` | v1.35.9 |
 | `orchestra-node:1.34.12` | v1.34.12 |
 

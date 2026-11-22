@@ -54,10 +54,10 @@ mod tests {
         let req = CreateClusterRequest {
             spec: Some(ProtoClusterSpec {
                 name: "test-daemon-clus".to_string(),
-                kubernetes_version: "v1.36.6".to_string(),
+                kubernetes_version: "v1.37.1".to_string(),
                 control_plane_nodes: 1,
                 worker_nodes: 2,
-                node_image: "orchestra-node:1.36.6".to_string(),
+                node_image: "orchestra-node:1.37.1".to_string(),
                 cni_plugin: "orchestranet".to_string(),
                 service_proxy_mode: "orchestra".to_string(),
                 pod_cidr: "10.244.0.0/16".to_string(),

@@ -310,14 +310,15 @@ fn node_mounts() -> Vec<Mount> {
             ..Default::default()
         },
         Mount {
-            target: Some("/sys/fs/cgroup".to_string()),
-            typ: Some(MountTypeEnum::TMPFS),
+            target: Some("/var/lib/containerd".to_string()),
+            typ: Some(MountTypeEnum::VOLUME),
             read_only: Some(false),
-            tmpfs_options: Some(bollard::models::MountTmpfsOptions {
-                // 256 MB is plenty for the cgroup hierarchy
-                size_bytes: Some(256 * 1024 * 1024),
-                ..Default::default()
-            }),
+            ..Default::default()
+        },
+        Mount {
+            target: Some("/var/lib/kubelet".to_string()),
+            typ: Some(MountTypeEnum::VOLUME),
+            read_only: Some(false),
             ..Default::default()
         },
     ]
