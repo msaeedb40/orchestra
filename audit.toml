@@ -1,0 +1,5 @@
+[advisories]
+ignore = [
+    "RUSTSEC-2026-0543", # chrono unmaintained advisory
+    "RUSTSEC-2024-0449", # unsafe-libyaml unmaintained advisory
+]

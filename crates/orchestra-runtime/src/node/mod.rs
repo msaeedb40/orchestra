@@ -137,10 +137,9 @@ impl RuntimeProvider for DockerRuntimeProvider {
                     .filter(|ip| !ip.is_empty())
                     .cloned()
                     .or_else(|| {
-                        ns.networks
-                            .as_ref()?
-                            .values()
-                            .find_map(|net| net.ip_address.as_ref().filter(|ip| !ip.is_empty()).cloned())
+                        ns.networks.as_ref()?.values().find_map(|net| {
+                            net.ip_address.as_ref().filter(|ip| !ip.is_empty()).cloned()
+                        })
                     })
             })
             .and_then(|ip| Ipv4Addr::from_str(&ip).ok());

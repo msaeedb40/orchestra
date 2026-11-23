@@ -296,7 +296,9 @@ impl NodeService for GrpcServer {
         let cluster = get_cluster_by_name(&self.state.db, &req.cluster_name)
             .await
             .map_err(|e| Status::internal(e.to_string()))?
-            .ok_or_else(|| Status::not_found(format!("Cluster '{}' not found", req.cluster_name)))?;
+            .ok_or_else(|| {
+                Status::not_found(format!("Cluster '{}' not found", req.cluster_name))
+            })?;
 
         let nodes = orchestra_storage::repository::node::list_nodes(&self.state.db, &cluster.id)
             .await
@@ -310,7 +312,11 @@ impl NodeService for GrpcServer {
                 name: n.name,
                 role: n.role.to_string(),
                 state: n.status.state.to_string(),
-                ip_address: n.status.internal_ip.map(|ip| ip.to_string()).unwrap_or_default(),
+                ip_address: n
+                    .status
+                    .internal_ip
+                    .map(|ip| ip.to_string())
+                    .unwrap_or_default(),
                 container_id: n.status.container_id.unwrap_or_default(),
             })
             .collect();

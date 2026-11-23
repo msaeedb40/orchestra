@@ -288,7 +288,12 @@ async fn reconcile_bootstrapping(
         info!(cluster = %cluster.spec.name, cp_container_id, "Executing kubeadm init on control plane");
 
         let kubeconfig = match bootstrapper
-            .init_control_plane(cp_container_id, &cluster.spec, &cp_ip.to_string(), host_port)
+            .init_control_plane(
+                cp_container_id,
+                &cluster.spec,
+                &cp_ip.to_string(),
+                host_port,
+            )
             .await
         {
             Ok(cfg) => cfg,
@@ -320,7 +325,10 @@ async fn reconcile_bootstrapping(
         // Join worker nodes
         let (code, join_output) = state
             .runtime
-            .exec_in_node(cp_container_id, &["kubeadm", "token", "create", "--print-join-command"])
+            .exec_in_node(
+                cp_container_id,
+                &["kubeadm", "token", "create", "--print-join-command"],
+            )
             .await?;
 
         if code == 0 {
